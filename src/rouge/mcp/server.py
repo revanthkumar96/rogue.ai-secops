@@ -1,15 +1,17 @@
 import os
-import pyotp
 from typing import List
+
+import pyotp
 from mcp.server import Server
-from mcp.types import Tool, TextContent
+from mcp.types import TextContent, Tool
+
 
 class RougeMcpServer:
     def __init__(self, target_dir: str):
         self.target_dir = target_dir
         self.server = Server("rouge-helper")
         self._setup_tools()
-    
+
     def _setup_tools(self):
         @self.server.list_tools()
         async def list_tools() -> List[Tool]:
@@ -45,17 +47,17 @@ class RougeMcpServer:
                 filename = arguments["filename"]
                 content = arguments["content"]
                 save_path = os.path.join(self.target_dir, "deliverables", filename)
-                
+
                 os.makedirs(os.path.dirname(save_path), exist_ok=True)
                 with open(save_path, "w") as f:
                     f.write(content)
-                
+
                 return [TextContent(type="text", text=f"Saved deliverable to {filename}")]
-            
+
             elif name == "generate_totp":
                 secret = arguments["secret"]
                 totp = pyotp.TOTP(secret)
                 code = totp.now()
                 return [TextContent(type="text", text=f"TOTP Code: {code}")]
-            
+
             raise ValueError(f"Unknown tool: {name}")
