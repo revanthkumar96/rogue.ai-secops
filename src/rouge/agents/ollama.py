@@ -1,3 +1,4 @@
+import asyncio
 from typing import Annotated, Any, Dict, List, TypedDict
 
 import ollama
@@ -15,11 +16,12 @@ class AgentState(TypedDict):
 
 
 class LangGraphOllamaAgent:
-    def __init__(self, name: str, model_name: str, base_url: str, tools: List[Any] = []):
+    def __init__(self, name: str, model_name: str, base_url: str, tools: List[Any] = [], log_callback=None):
         self.name = name
         self.model_name = model_name
         self.base_url = base_url
         self.client = ollama.AsyncClient(host=base_url)
+        self.log_callback = log_callback
 
         # Tools are defined as LangChain tools, we need to convert them to Ollama format
         self.ollama_tools = self._convert_to_ollama_tools(tools)
@@ -74,10 +76,20 @@ class LangGraphOllamaAgent:
             elif isinstance(m, AIMessage):
                 msg = {"role": "assistant", "content": m.content}
                 if m.tool_calls:
-                    msg["tool_calls"] = m.tool_calls
+                    # Convert LangChain tool calls to Ollama format
+                    msg["tool_calls"] = [
+                        {
+                            "type": "function",
+                            "function": {
+                                "name": tc["name"],
+                                "arguments": tc["args"],
+                            },
+                        }
+                        for tc in m.tool_calls
+                    ]
                 ollama_msgs.append(msg)
             elif isinstance(m, ToolMessage):
-                ollama_msgs.append({"role": "tool", "content": m.content, "name": m.name})
+                ollama_msgs.append({"role": "tool", "content": m.content})
         return ollama_msgs
 
     async def _call_model(self, state: AgentState):
@@ -89,10 +101,34 @@ class LangGraphOllamaAgent:
             tools=self.ollama_tools if self.ollama_tools else None,
         )
 
-        msg_content = response["message"].get("content", "")
-        tool_calls = response["message"].get("tool_calls", [])
+        message = response["message"]
+        msg_content = message.get("content", "")
+        ollama_tool_calls = message.get("tool_calls", []) or []
+
+        if msg_content:
+            print(f"[{self.name}] Thinking: {msg_content[:150]}...")
+            if self.log_callback:
+                await self.log_callback(self.name, "thought", msg_content)
 
         # Convert back to LangChain-style messages for the graph state
+        tool_calls = []
+        for tc in ollama_tool_calls:
+            # Handle potential different response structures from Ollama models
+            fn = tc.get("function")
+            if fn:
+                name = fn["name"]
+                args = fn["arguments"]
+                print(f"[{self.name}] Calling Tool: {name}({args})")
+                if self.log_callback:
+                    await self.log_callback(self.name, "tool", f"{name}({args})")
+                tool_calls.append(
+                    {
+                        "name": name,
+                        "args": args,
+                        "id": f"call_{int(asyncio.get_event_loop().time())}",
+                    }
+                )
+
         ai_msg = AIMessage(content=msg_content, tool_calls=tool_calls)
         return {"messages": [ai_msg]}
 

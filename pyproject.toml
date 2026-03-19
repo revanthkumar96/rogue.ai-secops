@@ -1,10 +1,11 @@
 [project]
 name = "rouge"
 version = "0.1.0"
-description = "Autonomous AI Pentester in Python using Ollama and Temporal"
+description = "AI-powered DevOps and Testing Automation Platform using Ollama and Temporal"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    # Core orchestration and AI
     "jinja2>=3.1.6",
     "jsonschema>=4.26.0",
     "langchain-core>=1.2.19",
@@ -13,24 +14,43 @@ dependencies = [
     "langgraph-checkpoint-sqlite>=3.0.3",
     "mcp>=1.26.0",
     "ollama>=0.6.1",
-    "playwright>=1.58.0",
     "pydantic>=2.12.5",
     "pydantic-settings>=2.13.1",
-    "pyotp>=2.9.0",
     "python-dotenv>=1.2.2",
+    "questionary>=2.1.0",
     "rich>=14.3.3",
     "temporalio>=1.23.0",
+    # Testing tools
+    "playwright>=1.58.0",
+    "faker>=30.8.2",  # Test data generation
+    "pillow>=11.1.0",  # Image comparison for visual regression
+    "pyotp>=2.9.0",  # TOTP for 2FA testing
+    # DevOps tools
+    "pyyaml>=6.0.2",  # YAML parsing for K8s manifests and configs
+    "requests>=2.32.3",  # HTTP requests for API tools (Grafana, Prometheus, Vault)
 ]
+
+[tool.uv]
+package = true
 
 [project.scripts]
 rouge = "rouge.main:main"
 
 [dependency-groups]
 dev = [
+    # Testing framework
     "pytest>=9.0.2",
     "pytest-asyncio>=1.3.0",
     "pytest-mock>=3.15.1",
+    "pytest-playwright>=0.6.2",  # Playwright testing integration
+    "pytest-cov>=6.0.0",  # Code coverage
+    "pytest-xdist>=3.6.1",  # Parallel test execution
+    # Code quality
     "ruff>=0.15.6",
+    "mypy>=1.14.1",  # Type checking
+    # Additional test utilities
+    "coverage>=7.6.9",  # Coverage reporting
+    "factory-boy>=3.3.1",  # Test data factories
 ]
 
 [tool.ruff]
@@ -47,4 +67,33 @@ testpaths = ["tests"]
 pythonpath = ["src"]
 markers = [
     "e2e: end-to-end tests",
+    "unit: unit tests",
+    "integration: integration tests",
+    "slow: slow running tests",
+]
+# Coverage settings
+addopts = [
+    "--cov=src/rouge",
+    "--cov-report=html",
+    "--cov-report=term-missing",
+    "--cov-report=xml",
+    "-v",
+]
+# Coverage thresholds
+[tool.coverage.run]
+source = ["src/rouge"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
 ]
