@@ -5,9 +5,10 @@ Tests workflow execution, agent coordination, and deliverable generation
 
 import asyncio
 import os
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
+from temporalio import activity
 from temporalio.worker import Worker
 
 from rouge.temporal.workflows import (
@@ -206,8 +207,6 @@ class TestDeliverableGeneration:
 
 
 # Helper functions for mocking
-from temporalio import activity
-
 @activity.defn(name="mock_run_agent_activity")
 async def mock_run_agent_activity(agent_name: str, context: dict):
     """Mock agent activity for testing"""
