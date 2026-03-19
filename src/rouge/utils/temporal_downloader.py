@@ -1,7 +1,7 @@
-import os
-import zipfile
 import urllib.request
+import zipfile
 from pathlib import Path
+
 from rich.console import Console
 
 console = Console()
@@ -12,13 +12,14 @@ TEMPORAL_EXE = TEMPORAL_DIR / "temporal.exe"
 TEMPORAL_ZIP = Path("temporal_cli.zip")
 DOWNLOAD_URL = f"https://github.com/temporalio/cli/releases/download/v{TEMPORAL_VERSION}/temporal_cli_{TEMPORAL_VERSION}_windows_amd64.zip"
 
+
 def ensure_temporal_cli():
     """Ensure the Temporal CLI is present in the project directory."""
     if TEMPORAL_EXE.exists():
         return
 
     console.print(f"[bold cyan]📦 Temporal CLI missing. Setting up version {TEMPORAL_VERSION}...[/bold cyan]")
-    
+
     try:
         # 1. Download
         if not TEMPORAL_ZIP.exists():
@@ -31,7 +32,7 @@ def ensure_temporal_cli():
         TEMPORAL_DIR.mkdir(exist_ok=True)
         with zipfile.ZipFile(TEMPORAL_ZIP, 'r') as zip_ref:
             zip_ref.extractall(TEMPORAL_DIR)
-        
+
         console.print("  [green]Extraction complete.[/green]")
 
         # 3. Cleanup zip

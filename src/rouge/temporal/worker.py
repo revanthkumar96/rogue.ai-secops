@@ -1,13 +1,14 @@
 import asyncio
 import sys
+
 from temporalio.client import Client
-from temporalio.worker import Worker
 from temporalio.envconfig import ClientConfig
+from temporalio.worker import Worker
 
 from ..config.parser import RougeSettings
+from ..utils.temporal_downloader import ensure_temporal_cli
 from .activities import assemble_report, check_exploitation_queue, run_agent_activity
 from .workflows import RougePentestWorkflow
-from ..utils.temporal_downloader import ensure_temporal_cli
 
 
 async def run_worker():
@@ -16,7 +17,7 @@ async def run_worker():
 
     # Use envconfig to load connection options
     connect_config = ClientConfig.load_client_connect_config()
-    
+
     if "target_host" not in connect_config or not connect_config["target_host"]:
         connect_config["target_host"] = settings.temporal_address
 

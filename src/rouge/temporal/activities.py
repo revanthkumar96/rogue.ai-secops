@@ -41,8 +41,8 @@ async def run_agent_activity(input: AgentActivityInput) -> AgentActivityResult:
             activity.logger.error(f"Failed to signal log: {e}")
 
     agent = LangGraphOllamaAgent(
-        name=input.agent_name, 
-        model_name=model_name, 
+        name=input.agent_name,
+        model_name=model_name,
         base_url=settings.ollama_base_url,
         log_callback=log_callback
     )
