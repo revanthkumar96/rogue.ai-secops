@@ -6,7 +6,6 @@ from rouge.temporal.activities import run_agent_activity
 from rouge.types.temporal_types import AgentActivityInput
 
 
-
 @pytest.mark.asyncio
 async def test_run_agent_activity_success():
     # Mock the AgentExecutionService or the agent itself

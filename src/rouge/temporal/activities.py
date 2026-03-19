@@ -1,5 +1,3 @@
-from typing import Any, Dict
-
 from temporalio import activity
 
 from ..agents.ollama import LangGraphOllamaAgent
