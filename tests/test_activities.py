@@ -14,7 +14,7 @@ async def test_run_agent_activity_success():
         mock_agent.run = AsyncMock(return_value="Agent Output")
 
         activity_input = AgentActivityInput(
-            agent_name="pre-recon",
+            agent_name="framework-builder",
             web_url="http://test.com",
             repo_path="./repo"
         )
