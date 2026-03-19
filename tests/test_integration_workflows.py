@@ -5,12 +5,10 @@ Tests workflow execution, agent coordination, and deliverable generation
 
 import asyncio
 import os
-from datetime import timedelta
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
-from temporalio.client import WorkflowHandle
-from temporalio.testing import WorkflowEnvironment
+from temporalio.worker import Worker
 
 from rouge.temporal.workflows import (
     CICDPipelineWorkflow,
@@ -217,9 +215,6 @@ async def mock_run_agent_activity(agent_name: str, context: dict):
         "deliverable": f"# {agent_name} Deliverable\n\nGenerated content",
         "deliverable_path": f"/tmp/deliverables/{agent_name}_output.md",
     }
-
-
-from temporalio.worker import Worker
 
 
 @pytest.mark.integration

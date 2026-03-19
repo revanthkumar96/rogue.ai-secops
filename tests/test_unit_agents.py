@@ -4,8 +4,8 @@ Tests agent definitions, registry, and configuration
 """
 
 import pytest
-from rouge.session_manager import AGENTS, AGENT_PHASE_MAP, get_agents_by_phase
-from rouge.types.models import AgentName, PhaseName
+
+from rouge.session_manager import AGENT_PHASE_MAP, AGENTS, get_agents_by_phase
 
 
 class TestAgentRegistry:

@@ -1,7 +1,5 @@
 """Testing tools for ROUGE agents - Playwright, pytest, API testing, and more."""
 
-import asyncio
-import json
 import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -288,8 +286,9 @@ asyncio.run(run())
             Dict with API response and assertion results
         """
         try:
-            import requests
             import time
+
+            import requests
 
             # Prepare request
             request_kwargs = {
@@ -315,7 +314,7 @@ asyncio.run(run())
 
             try:
                 response_data["body"] = response.json()
-            except:
+            except (ValueError, Exception):
                 response_data["body"] = response.text
 
             # Run assertions if provided

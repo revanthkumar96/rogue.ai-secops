@@ -7,14 +7,13 @@ import os
 import tempfile
 from pathlib import Path
 from typing import AsyncGenerator, Dict, Generator
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from temporalio.testing import WorkflowEnvironment
 from temporalio.worker import Worker
 
 from rouge.config.parser import RougeSettings
-from rouge.session_manager import AGENTS
 from rouge.temporal.activities import run_agent_activity
 from rouge.temporal.workflows import (
     CICDPipelineWorkflow,

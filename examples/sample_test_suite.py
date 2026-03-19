@@ -9,8 +9,8 @@ CI Integration: GitHub Actions ready
 """
 
 import pytest
-from playwright.sync_api import Page, expect
 from faker import Faker
+from playwright.sync_api import Page, expect
 
 fake = Faker()
 

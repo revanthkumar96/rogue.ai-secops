@@ -2,10 +2,10 @@
 
 import json
 import subprocess
-import tempfile
-import yaml
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+import yaml
 
 
 class DevOpsTools:
@@ -225,7 +225,7 @@ class DevOpsTools:
             if result.returncode == 0 and output == "json":
                 try:
                     resources = json.loads(result.stdout)
-                except:
+                except (json.JSONDecodeError, ValueError):
                     pass
 
             return {

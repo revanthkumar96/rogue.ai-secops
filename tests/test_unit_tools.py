@@ -3,10 +3,9 @@ Unit tests for ROUGE MCP tools
 Tests TestingTools and DevOpsTools functionality
 """
 
-import json
 import os
 from pathlib import Path
-from unittest.mock import Mock, mock_open, patch
+from unittest.mock import Mock, patch
 
 import pytest
 

@@ -393,7 +393,7 @@ async def monitor_workflow(handle: WorkflowHandle, workflow_type: str):
             return False
 
     elapsed = datetime.now() - start_time
-    console.print(f"\n[bold green]✅ Workflow Completed![/bold green]")
+    console.print("\n[bold green]✅ Workflow Completed![/bold green]")
     console.print(f"[dim]Duration: {int(elapsed.total_seconds())}s | Agents run: {agent_count}[/dim]")
     console.print(
         Panel(
@@ -568,7 +568,7 @@ async def interactive_session():
 
 async def cmd_run_tests(deliverables_dir: str = "deliverables"):
     """Execute generated test suites"""
-    console.print(f"\n[bold cyan]🧪 Executing Generated Tests[/bold cyan]\n")
+    console.print("\n[bold cyan]🧪 Executing Generated Tests[/bold cyan]\n")
 
     test_files = []
     for root, _, files in os.walk(deliverables_dir):
@@ -597,7 +597,7 @@ async def cmd_run_tests(deliverables_dir: str = "deliverables"):
 
 async def cmd_apply_infrastructure(deliverables_dir: str = "deliverables"):
     """Apply generated Terraform infrastructure"""
-    console.print(f"\n[bold cyan]☁️  Applying Generated Infrastructure[/bold cyan]\n")
+    console.print("\n[bold cyan]☁️  Applying Generated Infrastructure[/bold cyan]\n")
 
     tf_files = []
     for root, _, files in os.walk(deliverables_dir):
@@ -673,7 +673,7 @@ async def cmd_list_workflows():
 
 async def cmd_view_deliverables(deliverables_dir: str = "deliverables"):
     """View generated deliverables"""
-    console.print(f"\n[bold cyan]📦 Generated Deliverables[/bold cyan]\n")
+    console.print("\n[bold cyan]📦 Generated Deliverables[/bold cyan]\n")
 
     if not os.path.exists(deliverables_dir):
         console.print(f"[yellow]{deliverables_dir}/ directory not found[/yellow]")
