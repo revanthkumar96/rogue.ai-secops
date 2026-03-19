@@ -1,0 +1,51 @@
+name: ROUGE CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  lint-and-unit:
+    name: Lint and Standard Tests
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install uv
+      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      
+    - name: Set up Python
+      run: uv python install 3.12
+      
+    - name: Install dependencies
+      run: uv sync
+      
+    - name: Check linting
+      run: uv run ruff check .
+      
+    - name: Run Standard Tests
+      run: uv run pytest -v -m "not e2e"
+
+  e2e-tests:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main'
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install uv
+      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      
+    - name: Set up Python
+      run: uv python install 3.12
+      
+    - name: Install dependencies
+      run: uv sync
+      
+    - name: Install Playwright Browsers
+      run: uv run playwright install --with-deps
+      
+    - name: Run E2E Tests
+      run: uv run pytest -v -m "e2e"

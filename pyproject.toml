@@ -18,9 +18,13 @@ dependencies = [
     "pydantic-settings>=2.13.1",
     "pyotp>=2.9.0",
     "python-dotenv>=1.2.2",
+    "questionary>=2.1.0",
     "rich>=14.3.3",
     "temporalio>=1.23.0",
 ]
+
+[tool.uv]
+package = true
 
 [project.scripts]
 rouge = "rouge.main:main"
@@ -45,3 +49,6 @@ ignore = ["E501"]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 pythonpath = ["src"]
+markers = [
+    "e2e: end-to-end tests",
+]

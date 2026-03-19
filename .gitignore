@@ -12,3 +12,5 @@ audit_logs/
 repos/
 deliverables/
 .python-version
+temporal_cli/
+temporal_cli.zip

@@ -1,9 +1,9 @@
-import pytest
-import os
-from rouge.config.parser import load_config, DistributedConfig, Authentication
+from rouge.config.parser import DistributedConfig, load_config
+
 
 def test_load_config_invalid_path():
     assert load_config("non_existent_path.yaml") is None
+
 
 def test_load_config_valid_file(tmp_path):
     config_content = """
@@ -16,7 +16,7 @@ avoid:
 """
     config_file = tmp_path / "test_config.yaml"
     config_file.write_text(config_content)
-    
+
     config = load_config(str(config_file))
     assert isinstance(config, DistributedConfig)
     assert config.authentication.login_url == "http://test.com/login"
