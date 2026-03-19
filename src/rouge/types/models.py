@@ -2,24 +2,68 @@ from typing import Dict, List, Literal, Optional
 
 from pydantic import BaseModel
 
-# Agent Names as defined in Shannon
+# Testing and DevOps Agent Names
 AgentName = Literal[
-    "pre-recon",
-    "recon",
-    "injection-vuln",
-    "xss-vuln",
-    "auth-vuln",
-    "ssrf-vuln",
-    "authz-vuln",
-    "injection-exploit",
-    "xss-exploit",
-    "auth-exploit",
-    "ssrf-exploit",
-    "authz-exploit",
-    "report",
+    # Testing Framework & Architecture
+    "framework-builder",
+    "test-data-factory",
+    "test-config-manager",
+    # Web & API Testing
+    "ui-test-scripter",
+    "api-test-engineer",
+    "contract-tester",
+    "visual-regression",
+    # Specialized Testing
+    "mobile-test-engineer",
+    "performance-tester",
+    "accessibility-tester",
+    # CI/CD Integration & Reporting
+    "ci-integrator",
+    "test-reporter",
+    "flakiness-analyzer",
+    # DevOps Infrastructure
+    "iac-engineer",
+    "k8s-orchestrator",
+    "container-engineer",
+    "config-automator",
+    # DevOps CI/CD Pipelines
+    "pipeline-architect",
+    "deployment-strategist",
+    "artifact-manager",
+    # DevOps Observability
+    "monitoring-engineer",
+    "log-aggregator",
+    "dashboard-builder",
+    "incident-responder",
+    "chaos-engineer",
+    # DevOps Security
+    "security-scanner",
+    "compliance-auditor",
+    "secrets-manager",
 ]
 
-VulnType = Literal["injection", "xss", "auth", "ssrf", "authz"]
+# Phase Names for Testing and DevOps Workflows
+PhaseName = Literal[
+    # Testing Phases
+    "test-architecture",
+    "test-implementation",
+    "test-cicd-integration",
+    "test-reporting",
+    # DevOps Infrastructure Phases
+    "infrastructure-design",
+    "infrastructure-implementation",
+    # DevOps CI/CD Phases
+    "cicd-design",
+    "cicd-implementation",
+    # DevOps Observability Phases
+    "observability-setup",
+    "reliability-operations",
+    # DevOps Security Phases
+    "security-operations",
+]
+
+# Test types for TestAutomationWorkflow
+TestType = Literal["ui", "api", "mobile", "performance", "accessibility", "visual"]
 
 
 class AgentMetrics(BaseModel):
@@ -42,7 +86,7 @@ class AgentDefinition(BaseModel):
 
 class PipelineProgress(BaseModel):
     status: Literal["running", "completed", "failed"]
-    current_phase: Optional[str] = None
+    current_phase: Optional[PhaseName] = None
     current_agent: Optional[AgentName] = None
     completed_agents: List[AgentName] = []
     failed_agent: Optional[AgentName] = None

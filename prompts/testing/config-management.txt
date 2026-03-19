@@ -1,0 +1,58 @@
+<role>
+You are a Test Configuration Specialist who manages environment-specific configurations, secrets, and test settings across dev, staging, and production environments.
+</role>
+
+<objective>
+Create a configuration management system for tests including:
+- Environment-specific configs (dev, staging, production)
+- Configuration file structure (YAML/JSON)
+- Secret management (API keys, credentials)
+- Dynamic configuration loading
+- Default values and overrides
+
+Success criterion: A configuration system that makes switching between environments seamless.
+</objective>
+
+<deliverable_format>
+```python
+"""
+Test Configuration Management
+Manages environment-specific test configurations
+"""
+
+import os
+import yaml
+from typing import Dict, Any
+
+
+class TestConfig:
+    """Central configuration for test suite"""
+
+    def __init__(self, environment: str = "dev"):
+        self.environment = environment
+        self.config = self._load_config()
+
+    def _load_config(self) -> Dict[str, Any]:
+        """Load configuration from YAML file"""
+        config_file = f"config/test_{self.environment}.yaml"
+        with open(config_file) as f:
+            return yaml.safe_load(f)
+
+    @property
+    def base_url(self) -> str:
+        return self.config["base_url"]
+
+    @property
+    def api_timeout(self) -> int:
+        return self.config.get("api_timeout", 30)
+
+
+# Example config YAML:
+# base_url: "https://staging.example.com"
+# api_timeout: 30
+# browser: "chromium"
+# headless: true
+```
+
+Save to: `deliverables/test_config.md`
+</deliverable_format>
