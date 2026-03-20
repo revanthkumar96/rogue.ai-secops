@@ -105,10 +105,11 @@ async def fetch_available_models(base_url: str) -> List[str]:
     try:
         client = ollama.AsyncClient(host=base_url)
         response = await client.list()
-        return [m["name"] for m in response["models"]]
-    except Exception:
-        # Fallback to defaults if Ollama is not reachable
-        return ["qwen2.5:7b", "llama3.1:8b", "llama3.1:70b", "mistral:latest"]
+        return [m.model for m in response.models]
+    except Exception as e:
+        console.print(f"[red]Could not connect to Ollama at {base_url}: {e}[/red]")
+        console.print("[yellow]Make sure Ollama is running: ollama serve[/yellow]")
+        return []
 
 
 async def select_workflow_type():
@@ -508,15 +509,13 @@ async def interactive_session():
         available_models = await fetch_available_models(settings.ollama_base_url)
 
     if not available_models:
-        console.print("[yellow]⚠️  Warning: No models found. Using defaults.[/yellow]")
-        available_models = ["qwen2.5:7b", "llama3.1:8b", "llama3.1:70b"]
-
-    selected_model = await questionary.select(
-        "🤖 Select Ollama model:", choices=available_models + ["custom"], default=available_models[0]
-    ).ask_async()
-
-    if selected_model == "custom":
-        selected_model = await questionary.text("Enter custom model name:").ask_async()
+        console.print("[yellow]No models found. Pull a model first: ollama pull llama3.1:8b[/yellow]")
+        selected_model = await questionary.text("Enter model name manually:").ask_async()
+    else:
+        console.print(f"[green]Found {len(available_models)} model(s) on this machine[/green]")
+        selected_model = await questionary.select(
+            "Select Ollama model:", choices=available_models, default=available_models[0]
+        ).ask_async()
 
     # Main workflow loop
     while True:
@@ -773,15 +772,19 @@ Examples:
             selected_model = args.model
             console.print(f"[cyan]Using Ollama model: {selected_model}[/cyan]")
         else:
-            # Fetch and select model interactively
+            # Fetch and select model interactively from machine
             settings = RougeSettings()
-            with console.status("[bold green]Fetching available models..."):
+            with console.status("[bold green]Fetching available models from Ollama..."):
                 available_models = await fetch_available_models(settings.ollama_base_url)
 
             if available_models:
+                console.print(f"[green]Found {len(available_models)} model(s) on this machine[/green]")
                 selected_model = await questionary.select(
                     "Select Ollama model:", choices=available_models
                 ).ask_async()
+            else:
+                console.print("[yellow]No models found. Pull a model first: ollama pull llama3.1:8b[/yellow]")
+                selected_model = await questionary.text("Enter model name manually:").ask_async()
 
     # Route to appropriate command
     if args.command == "run":
