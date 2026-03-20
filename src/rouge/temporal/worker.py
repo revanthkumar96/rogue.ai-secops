@@ -7,7 +7,12 @@ from temporalio.worker import Worker
 
 from ..config.parser import RougeSettings
 from ..utils.temporal_downloader import ensure_temporal_cli
-from .activities import assemble_report, check_exploitation_queue, run_agent_activity
+from .activities import (
+    assemble_report,
+    check_exploitation_queue,
+    run_agent_activity,
+    set_temporal_client,
+)
 from .workflows import (
     CICDPipelineWorkflow,
     InfrastructureProvisioningWorkflow,
@@ -36,7 +41,10 @@ async def run_worker():
         print("   Start it with: temporal server start-dev")
         sys.exit(1)
 
-    # 2. Run Worker with all workflow types
+    # 2. Share client with activities for workflow signaling
+    set_temporal_client(client)
+
+    # 3. Run Worker with all workflow types
     worker = Worker(
         client,
         task_queue="rouge-task-queue",
