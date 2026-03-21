@@ -1,0 +1,21 @@
+[install]
+# Automatically install peer dependencies
+peer = true
+
+# Use production mode for smaller installs
+production = false
+
+# Cache directory
+cache = true
+
+[install.scopes]
+# Workspace scope for internal packages
+"@rouge" = { }
+
+[test]
+# Test configuration
+preload = ["./test/setup.ts"]
+
+[run]
+# Hot reload by default in development
+hot = true
