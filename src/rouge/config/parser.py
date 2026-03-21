@@ -41,11 +41,22 @@ class DistributedConfig(BaseModel):
 class RougeSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
+    # LLM Provider Settings
+    llm_provider: Literal["ollama", "groq"] = Field(default="ollama")
+
+    # Ollama Settings
     ollama_base_url: str = Field(default="http://localhost:11434")
     ollama_small_model: str = Field(default="llama3.1:8b")
     ollama_medium_model: str = Field(default="llama3.1:8b")
     ollama_large_model: str = Field(default="llama3.1:70b")
 
+    # Groq Settings
+    groq_api_key: Optional[str] = Field(default=None)
+    groq_small_model: str = Field(default="llama3-8b-8192")
+    groq_medium_model: str = Field(default="mixtral-8x7b-32768")
+    groq_large_model: str = Field(default="llama3-70b-8192")
+
+    # Temporal Settings
     temporal_address: str = Field(default="localhost:7233")
     temporal_namespace: str = Field(default="default")
 
