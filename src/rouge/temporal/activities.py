@@ -1,4 +1,3 @@
-import os
 import time
 from pathlib import Path
 from typing import Optional
@@ -17,6 +16,7 @@ from ..types.temporal_types import (
     ExploitQueueInput,
     ReportInput,
 )
+from ..utils.operations import PlatformHelper, RougeOperationsManager
 
 # Shared settings instance
 settings = RougeSettings()
@@ -48,8 +48,9 @@ def _get_prompt_manager() -> PromptManager:
 def _build_autonomous_prompt(agent_def, input: AgentActivityInput) -> str:
     """Build a prompt that instructs the agent to ACT autonomously using tools.
 
-    Tries to load the Jinja2 template first; falls back to a structured
-    autonomous prompt if the template is missing.
+    Includes OS-aware information, uv package manager instructions, and
+    context sharing directives. Tries to load the Jinja2 template first;
+    falls back to a structured autonomous prompt if the template is missing.
     """
     # Try loading the Jinja2 prompt template
     template_prompt = ""
@@ -67,6 +68,9 @@ def _build_autonomous_prompt(agent_def, input: AgentActivityInput) -> str:
     except Exception as e:
         activity.logger.warning(f"Could not load prompt template '{agent_def.prompt_template}': {e}")
 
+    # Get OS-aware information
+    os_summary = PlatformHelper.get_os_summary()
+
     # Build the autonomous execution prefix
     autonomous_prefix = f"""You are an AUTONOMOUS software agent. You MUST use your tools to take action — do NOT just give suggestions or instructions.
 
@@ -74,21 +78,30 @@ TARGET REPOSITORY: {input.repo_path}
 TARGET APPLICATION: {input.web_url or 'N/A'}
 YOUR ROLE: {agent_def.display_name}
 DELIVERABLE FILE: {agent_def.deliverable_filename}
+OPERATIONS DIR: .rouge_operations/ (all outputs go here)
+
+ENVIRONMENT:
+{os_summary}
 
 CRITICAL RULES:
-1. You MUST use the `list_directory` tool first to understand the project structure.
-2. You MUST use the `read_file` tool to read existing files (package.json, config files, source code).
-3. You MUST use the `write_file` tool to CREATE actual files in the repository — test files, config files, scripts, etc.
-4. You MUST use the `run_command` tool to install dependencies (npm install, pip install) and verify your work.
-5. You MUST use the `save_deliverable` tool to save your final deliverable as '{agent_def.deliverable_filename}'.
-6. NEVER just print instructions or suggestions. You have tools — USE THEM to do the work.
+1. FIRST use `read_shared_context` to see what prior agents discovered — do NOT repeat their work.
+2. Use `list_directory` to understand the project structure.
+3. Use `read_file` to read existing files (package.json, config files, source code).
+4. Use `write_file` to CREATE actual files in the repository — test files, config files, scripts, etc.
+5. Use `run_command` to install dependencies. IMPORTANT: use 'uv pip install' or 'uvx' — NEVER use bare 'pip install'. Use 'uv run pytest' instead of 'pytest'. Use 'uv run python' instead of 'python'.
+6. Use `save_deliverable` to save your final deliverable as '{agent_def.deliverable_filename}'.
+7. LAST use `write_shared_context` to share your findings (project type, frameworks found, files created, etc.) so subsequent agents can build on your work.
+8. NEVER just print instructions or suggestions. You have tools — USE THEM to do the work.
+9. All commands must be compatible with the operating system listed above.
 
 WORKFLOW:
-Step 1: Explore — list_directory(".") to see the project structure
-Step 2: Understand — read_file on key files (package.json, index.html, etc.)
-Step 3: Create — write_file to generate test suites, configs, CI pipelines, etc.
-Step 4: Install — run_command to install any needed packages
-Step 5: Deliver — save_deliverable with the final output artifact
+Step 1: Context — read_shared_context() to see prior agent findings
+Step 2: Explore — list_directory(".") to see the project structure
+Step 3: Understand — read_file on key files (package.json, index.html, etc.)
+Step 4: Create — write_file to generate test suites, configs, CI pipelines, etc.
+Step 5: Install — run_command with 'uv pip install' or 'uvx' to install packages
+Step 6: Deliver — save_deliverable with the final output artifact
+Step 7: Share — write_shared_context with your key findings for the next agent
 """
 
     if template_prompt:
@@ -109,9 +122,10 @@ async def run_agent_activity(input: AgentActivityInput) -> AgentActivityResult:
     # 2. Resolve model name based on tier
     model_name = getattr(settings, f"ollama_{agent_def.model_tier}_model")
 
-    # 3. Create tools scoped to the target repository
+    # 3. Initialize .rouge_operations and create tools scoped to the target repo
     repo_path = input.repo_path or "."
-    deliverables_dir = os.path.join(repo_path, "deliverables")
+    ops_manager = RougeOperationsManager(repo_path)
+    deliverables_dir = str(ops_manager.deliverables_path)
     tools = create_agent_tools(repo_path, deliverables_dir)
 
     # 4. Initialize agent with log callback that signals back to the workflow
@@ -139,7 +153,7 @@ async def run_agent_activity(input: AgentActivityInput) -> AgentActivityResult:
         log_callback=log_callback,
     )
 
-    # 5. Build autonomous prompt (template + action instructions)
+    # 5. Build autonomous prompt (template + action instructions + OS info)
     prompt = _build_autonomous_prompt(agent_def, input)
 
     # 6. Run agent

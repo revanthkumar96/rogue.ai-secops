@@ -1,4 +1,8 @@
-"""Testing tools for ROUGE agents - Playwright, pytest, API testing, and more."""
+"""Testing tools for ROUGE agents - Playwright, pytest, API testing, and more.
+
+All testing operations are scoped inside .rouge_operations/ and use uv for
+package management and virtual environment creation.
+"""
 
 import subprocess
 from pathlib import Path
@@ -6,13 +10,16 @@ from typing import Any, Dict, List, Optional
 
 from playwright.async_api import async_playwright
 
+from ..utils.operations import PlatformHelper, RougeOperationsManager
+
 
 class TestingTools:
     """Collection of testing tools for ROUGE agents"""
 
     def __init__(self, repo_path: str):
         self.repo_path = Path(repo_path)
-        self.deliverables_path = self.repo_path / "deliverables"
+        self.ops_manager = RougeOperationsManager(repo_path)
+        self.deliverables_path = self.ops_manager.deliverables_path
         self.deliverables_path.mkdir(exist_ok=True, parents=True)
 
     # ============================================
@@ -59,9 +66,10 @@ asyncio.run(run())
 """
             script_path.write_text(full_script)
 
-            # Execute the script
+            # Execute the script using uv run python for isolation
+            python_cmd = PlatformHelper.get_python_cmd()
             result = subprocess.run(
-                ["python", str(script_path)],
+                ["uv", "run", python_cmd, str(script_path)],
                 capture_output=True,
                 text=True,
                 timeout=120,
@@ -203,9 +211,10 @@ asyncio.run(run())
         parallel: bool = False,
         verbose: bool = True,
         coverage: bool = False,
+        create_venv: bool = True,
     ) -> Dict[str, Any]:
         """
-        Execute pytest test suite
+        Execute pytest test suite using uv inside a .rouge_operations venv.
 
         Args:
             test_path: Path to tests (file or directory)
@@ -213,12 +222,23 @@ asyncio.run(run())
             parallel: Run tests in parallel using pytest-xdist
             verbose: Verbose output
             coverage: Enable coverage reporting
+            create_venv: Create isolated venv in .rouge_operations/venvs/testing
 
         Returns:
             Dict with test results, output, and metrics
         """
         try:
-            cmd = ["pytest", test_path]
+            # Create isolated venv for testing if requested
+            if create_venv:
+                venv_result = self.ops_manager.create_venv("testing")
+                if not venv_result.get("success"):
+                    return {
+                        "success": False,
+                        "error": f"Failed to create test venv: {venv_result.get('error')}",
+                    }
+
+            # Use uv run pytest for proper isolation
+            cmd = ["uv", "run", "pytest", test_path]
 
             if verbose:
                 cmd.append("-v")

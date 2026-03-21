@@ -211,8 +211,26 @@ async def get_infrastructure_input():
     console.print("\n[bold green]☁️  Infrastructure Provisioning Configuration[/bold green]\n")
 
     cloud_provider = await questionary.select(
-        "Cloud provider:", choices=["aws", "azure", "gcp", "on-prem"], default="aws"
+        "Deployment platform:",
+        choices=[
+            "aws",
+            "azure",
+            "gcp",
+            "digitalocean",
+            "hetzner",
+            "local-server",
+            "on-prem",
+            "custom",
+        ],
+        default="aws",
     ).ask_async()
+
+    # If custom, ask for the platform name
+    if cloud_provider == "custom":
+        cloud_provider = await questionary.text(
+            "Enter custom platform name:",
+            instruction="(e.g., linode, vultr, railway, render, fly.io)",
+        ).ask_async()
 
     infra_type = await questionary.select(
         "Infrastructure type:", choices=["kubernetes", "vm", "serverless", "hybrid"], default="kubernetes"
@@ -303,10 +321,29 @@ async def get_unified_input():
         instruction="Select the repository directory"
     )
 
-    cloud_provider = await questionary.select("Cloud provider:", choices=["aws", "azure", "gcp"]).ask_async()
+    cloud_provider = await questionary.select(
+        "Deployment platform:",
+        choices=[
+            "aws",
+            "azure",
+            "gcp",
+            "digitalocean",
+            "hetzner",
+            "local-server",
+            "on-prem",
+            "custom",
+        ],
+    ).ask_async()
+
+    # If custom, ask for the platform name
+    if cloud_provider == "custom":
+        cloud_provider = await questionary.text(
+            "Enter custom platform name:",
+            instruction="(e.g., linode, vultr, railway, render, fly.io)",
+        ).ask_async()
 
     infra_type = await questionary.select(
-        "Infrastructure:", choices=["kubernetes", "vm", "serverless"]
+        "Infrastructure:", choices=["kubernetes", "vm", "serverless", "docker-compose", "hybrid"]
     ).ask_async()
 
     test_types = ["ui", "api", "performance"]  # Default comprehensive testing
@@ -694,10 +731,10 @@ async def cmd_run_tests(deliverables_dir: str = "deliverables"):
     for tf in test_files:
         console.print(f"  • {tf}")
 
-    # Run pytest
+    # Run pytest using uv
     import subprocess
     result = subprocess.run(
-        ["pytest", deliverables_dir, "-v", "--tb=short", "--color=yes"],
+        ["uv", "run", "pytest", deliverables_dir, "-v", "--tb=short", "--color=yes"],
         capture_output=False
     )
 

@@ -17,7 +17,7 @@ class PromptManager:
         config: Optional[DistributedConfig] = None,
     ) -> str:
         try:
-            template = self.env.get_template(f"{template_name}.txt")
+            template = self.env.get_template(f"{template_name}.md")
 
             # Combine variables with config-derived context
             context = {**variables}
