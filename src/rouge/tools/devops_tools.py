@@ -1,4 +1,7 @@
-"""DevOps tools for ROUGE agents - Terraform, Kubernetes, Docker, CI/CD, and Observability."""
+"""DevOps tools for ROUGE agents - Terraform, Kubernetes, Docker, CI/CD, and Observability.
+
+All operations are scoped inside .rouge_operations/ for isolation.
+"""
 
 import json
 import subprocess
@@ -7,13 +10,16 @@ from typing import Any, Dict, List, Optional
 
 import yaml
 
+from ..utils.operations import RougeOperationsManager
+
 
 class DevOpsTools:
     """Collection of DevOps automation tools for ROUGE agents"""
 
     def __init__(self, repo_path: str):
         self.repo_path = Path(repo_path)
-        self.deliverables_path = self.repo_path / "deliverables"
+        self.ops_manager = RougeOperationsManager(repo_path)
+        self.deliverables_path = self.ops_manager.deliverables_path
         self.deliverables_path.mkdir(exist_ok=True, parents=True)
 
     # ============================================
@@ -708,7 +714,7 @@ class DevOpsTools:
         except FileNotFoundError:
             return {
                 "success": False,
-                "error": "Ansible not found. Install with: pip install ansible",
+                "error": "Ansible not found. Install with: uv pip install ansible or uvx ansible",
             }
         except subprocess.TimeoutExpired:
             return {"success": False, "error": "Ansible playbook timeout (30 minutes)"}

@@ -3,13 +3,19 @@
 These tools are passed to LangGraphOllamaAgent so agents can CREATE files,
 READ existing code, LIST directories, and RUN commands — instead of just
 giving suggestions.
+
+All operations are scoped inside .rouge_operations/ for isolation.
+Context sharing between agents is done via shared_context.json.
 """
 
+import json
 import os
 import subprocess
 from typing import Optional
 
 from langchain_core.tools import tool
+
+from ..utils.operations import RougeOperationsManager
 
 
 def create_agent_tools(repo_path: str, deliverables_dir: str):
@@ -22,6 +28,11 @@ def create_agent_tools(repo_path: str, deliverables_dir: str):
     Returns:
         List of LangChain tools the agent can invoke via Ollama function calling.
     """
+    # Initialize operations manager for .rouge_operations
+    ops_manager = RougeOperationsManager(repo_path)
+
+    # Use .rouge_operations/deliverables as the deliverables directory
+    actual_deliverables = str(ops_manager.deliverables_path)
 
     @tool
     def write_file(file_path: str, content: str) -> str:
@@ -86,7 +97,11 @@ def create_agent_tools(repo_path: str, deliverables_dir: str):
 
     @tool
     def run_command(command: str, working_dir: Optional[str] = None) -> str:
-        """Execute a shell command in the target repository (e.g., npm install, pip install, mkdir).
+        """Execute a shell command in the target repository.
+
+        Use 'uv pip install' or 'uvx' instead of 'pip install'.
+        Use 'uv run pytest' instead of 'pytest'.
+        Use 'uv run python' instead of 'python' or 'python3'.
 
         Args:
             command: Shell command to execute
@@ -122,14 +137,69 @@ def create_agent_tools(repo_path: str, deliverables_dir: str):
     def save_deliverable(filename: str, content: str) -> str:
         """Save a final deliverable file (the agent's primary output artifact).
 
+        Deliverables are saved to .rouge_operations/deliverables/.
+
         Args:
             filename: Name of the deliverable file (e.g., 'framework_architecture.md')
             content: Full content of the deliverable
         """
-        os.makedirs(deliverables_dir, exist_ok=True)
-        save_path = os.path.join(deliverables_dir, filename)
+        os.makedirs(actual_deliverables, exist_ok=True)
+        save_path = os.path.join(actual_deliverables, filename)
         with open(save_path, "w", encoding="utf-8") as f:
             f.write(content)
-        return f"Deliverable saved to deliverables/{filename} ({len(content)} bytes)"
+        return f"Deliverable saved to .rouge_operations/deliverables/{filename} ({len(content)} bytes)"
 
-    return [write_file, read_file, list_directory, run_command, save_deliverable]
+    @tool
+    def read_shared_context() -> str:
+        """Read the shared context from prior agent runs.
+
+        This contains findings, discoveries, and outputs from all agents
+        that ran before you in this workflow. Always read this first to
+        avoid duplicating work.
+
+        Returns:
+            JSON string of the shared context store
+        """
+        context = ops_manager.read_context()
+        if not context.get("agents"):
+            return "No prior agent context found. You are the first agent in this run."
+        return json.dumps(context, indent=2, default=str)
+
+    @tool
+    def write_shared_context(key: str, value: str) -> str:
+        """Write your findings to the shared context for subsequent agents.
+
+        Use this at the end of your work to share what you discovered
+        (project type, frameworks found, configs created, etc.) so the
+        next agent can build on your work without repeating it.
+
+        Args:
+            key: A descriptive key for what you're sharing (e.g., 'project_type', 'test_framework')
+            value: The value to store (can be a JSON string for complex data)
+        """
+        # Try to parse value as JSON for richer context
+        try:
+            parsed_value = json.loads(value)
+        except (json.JSONDecodeError, TypeError):
+            parsed_value = value
+
+        # We use the key as part of the agent name context
+        # The agent_name will be set by who calls this
+        result = ops_manager.write_context(
+            agent_name=key,
+            data={"value": parsed_value},
+        )
+
+        if result.get("success"):
+            return f"Context saved under key '{key}'. Subsequent agents will be able to read this."
+        return f"Failed to save context: {result.get('error', 'unknown error')}"
+
+    return [
+        write_file,
+        read_file,
+        list_directory,
+        run_command,
+        save_deliverable,
+        read_shared_context,
+        write_shared_context,
+    ]

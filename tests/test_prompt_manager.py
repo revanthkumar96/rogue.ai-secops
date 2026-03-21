@@ -15,7 +15,7 @@ def test_load_prompt_missing_template(tmp_path):
 def test_load_prompt_interpolation(tmp_path):
     prompts_dir = tmp_path / "prompts"
     prompts_dir.mkdir()
-    template_file = prompts_dir / "test.txt"
+    template_file = prompts_dir / "test.md"
     template_file.write_text("Hello {{ name }}!")
 
     pm = PromptManager(str(prompts_dir))

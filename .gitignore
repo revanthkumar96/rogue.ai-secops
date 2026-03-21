@@ -14,3 +14,4 @@ deliverables/
 .python-version
 temporal_cli/
 temporal_cli.zip
+.rouge_operations/
