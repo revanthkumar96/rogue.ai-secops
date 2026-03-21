@@ -2,9 +2,9 @@ name: Tests
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, devops]
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, devops]
   workflow_dispatch:
 
 jobs:
@@ -45,7 +45,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          uv run pytest tests/test_unit_agents.py tests/test_unit_tools.py -v --tb=short --cov=src/rouge --cov-report=xml --cov-report=term-missing
+          uv run pytest tests/test_unit_agents.py tests/test_unit_tools.py tests/test_chat_mode.py tests/test_skills.py tests/test_main_integration.py -v --tb=short --cov=src/rouge --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
@@ -69,7 +69,7 @@ jobs:
       - name: Check test success rate
         run: |
           echo "All unit tests must pass for CI to succeed"
-          uv run pytest tests/test_unit_agents.py tests/test_unit_tools.py --tb=no -q
+          uv run pytest tests/test_unit_agents.py tests/test_unit_tools.py tests/test_chat_mode.py tests/test_skills.py tests/test_main_integration.py --tb=no -q
 
   integration-test:
     name: Integration Tests

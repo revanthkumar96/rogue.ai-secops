@@ -7,15 +7,26 @@
   <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
 </p>
 
-ROUGE is an AI-powered DevOps and Testing Automation platform that combines intelligent agents with durable workflow orchestration to automate testing, infrastructure provisioning, CI/CD pipelines, and observability setup. It uses **Temporal** for fault-tolerant orchestration and **LangGraph** for agentic reasoning, all powered by local **Ollama** models for complete privacy.
+ROUGE is an AI-powered DevOps and Testing Automation platform that combines intelligent agents with durable workflow orchestration to automate testing, infrastructure provisioning, CI/CD pipelines, and observability setup. It features an interactive **chat mode** with natural language interface, real-time token tracking, and a custom skills system. It uses **Temporal** for fault-tolerant orchestration and **LangGraph** for agentic reasoning, powered by **Ollama** (local) or **Groq** (cloud) for complete flexibility.
 
 ## Key Features
 
+### Automation & Intelligence
 - **Intelligent Test Generation**: AI agents write comprehensive Playwright UI tests, REST API tests, mobile tests, and performance tests
 - **Infrastructure as Code**: Automated Terraform/Pulumi generation for AWS, Azure, GCP, and Kubernetes
 - **CI/CD Pipeline Creation**: Auto-generate GitHub Actions, Jenkins, and GitLab CI pipelines with quality gates
 - **Observability Setup**: Configure Prometheus, Grafana, and ELK stack monitoring automatically
-- **Local AI Reasoning**: Powered by **Ollama** using local models (Llama 3, Qwen 2.5, Mistral) for complete privacy
+
+### New: Interactive Chat Mode 🎉
+- **Natural Language Interface**: Chat with ROUGE using plain English - no complex CLI arguments
+- **Live Token Tracking**: Real-time token usage and cost estimates displayed during conversations
+- **Custom Skills System**: Create reusable automation patterns in markdown files with trigger keywords
+- **Special Commands**: Use `/help`, `/stats`, `/skill`, `?` and more for quick actions
+- **File Picker GUI**: Select files and directories with GUI dialogs (with headless fallback)
+- **Session Persistence**: Auto-save chat history and resume later
+
+### Architecture
+- **Multi-Provider LLM**: Powered by **Ollama** (local, private) or **Groq** (cloud, fast)
 - **Durable Orchestration**: Built on **Temporal Python SDK**, ensuring fault-tolerant and parallel execution
 - **Agentic Loop**: Uses **LangGraph** for sophisticated "Reason-Act" cycles with tool-use capabilities
 - **MCP Integration**: Uses the **Model Context Protocol** to provide agents with testing, DevOps, and infrastructure tools
@@ -24,8 +35,10 @@ ROUGE is an AI-powered DevOps and Testing Automation platform that combines inte
 
 - Python 3.12+
 - [uv](https://astral.sh/uv/) for package management
-- [Ollama](https://ollama.com/) running locally with a model pulled
-- [Temporal CLI](https://github.com/temporalio/cli) for workflow orchestration
+- **Either:**
+  - [Ollama](https://ollama.com/) running locally with a model pulled (free, private)
+  - [Groq API key](https://console.groq.com) (fast, cloud-based)
+- [Temporal CLI](https://github.com/temporalio/cli) for workflow orchestration (auto-installed)
 
 ## Installation
 
@@ -85,17 +98,56 @@ uv sync
 uv run playwright install
 ```
 
-## CLI Reference
+## Quick Start
 
-All usage goes through the `rouge` CLI. The entry point is defined in `pyproject.toml` as `rouge = "rouge.main:main"`.
+### First Time Setup
 
-### Starting ROUGE
+Run ROUGE and follow the interactive wizard:
 
 ```bash
-# Interactive mode (guided prompts for workflow selection, model, and inputs)
 uv run rouge
+```
 
-# Specify Ollama model directly
+The wizard will guide you through:
+1. **Provider Selection**: Choose Ollama (local) or Groq (cloud)
+2. **Configuration**: Set up API keys, models, and paths
+3. **Chat Mode**: Automatically enters interactive chat
+
+### Chat Mode
+
+ROUGE now defaults to chat mode - interact naturally:
+
+```bash
+› How do I add tests to my React app?
+› Set up CI/CD for my project
+› Generate infrastructure for AWS
+› /help              # Show commands
+› /stats             # Token usage
+› /exit              # Exit chat
+```
+
+**Note**: To run workflows (not just chat), you need Temporal server and worker running:
+```bash
+# Terminal 1: Start Temporal
+temporal server start-dev
+
+# Terminal 2: Start worker
+uv run rouge worker
+
+# Terminal 3: Use ROUGE
+uv run rouge
+```
+
+For detailed setup, see:
+- [docs/CHAT_MODE.md](docs/CHAT_MODE.md) - Chat mode guide
+- [docs/WORKER_SETUP.md](docs/WORKER_SETUP.md) - Worker setup guide
+
+### Legacy CLI Reference
+
+Traditional workflow commands still work:
+
+```bash
+# Interactive mode (classic workflow selection)
 uv run rouge -ollama -model llama3.1:8b
 
 # Use -ollama flag to interactively pick from available models
@@ -103,6 +155,16 @@ uv run rouge -ollama
 ```
 
 ### Commands
+
+#### `worker` - Start the ROUGE Worker
+
+Starts the Temporal worker process that executes workflows.
+
+```bash
+uv run rouge worker
+```
+
+The worker polls the `rouge-task-queue` and must be running for workflows to execute. See [docs/WORKER_SETUP.md](docs/WORKER_SETUP.md) for detailed setup.
 
 #### `run` - Run Automation Workflows
 
@@ -176,6 +238,10 @@ uv run rouge deliverables --dir my-output/
 |------|-------------|
 | `-ollama` | Use Ollama for LLM inference (prompts for model selection if `-model` is not provided) |
 | `-model <name>` | Specify an Ollama model directly (e.g., `llama3.1:8b`, `qwen2.5:7b`, `mistral:latest`) |
+| `-groq` | Use Groq for cloud LLM inference |
+| `-groq-key <key>` | Provide Groq API key (or set `GROQ_API_KEY` env var) |
+| `--chat` | Enter interactive chat mode (default behavior) |
+| `--reset-config` | Re-run the configuration wizard |
 | `--non-interactive` | Run without interactive prompts (planned) |
 
 ## Configuration
@@ -309,7 +375,7 @@ temporal server start-dev --db-filename temporal.db
 Open a **second terminal**:
 
 ```bash
-uv run -m rouge.temporal.worker
+uv run rouge worker
 ```
 
 Expected output:
@@ -341,13 +407,15 @@ uv run rouge -ollama -model llama3.1:8b
 
 ### Terminal Layout
 
-You need three terminals running simultaneously:
+For workflow execution, you need three terminals running simultaneously:
 
 ```
-Terminal 1: temporal server start-dev          # Temporal server
-Terminal 2: uv run -m rouge.temporal.worker    # ROUGE worker
-Terminal 3: uv run rouge -ollama -model ...    # ROUGE CLI
+Terminal 1: temporal server start-dev    # Temporal server
+Terminal 2: uv run rouge worker          # ROUGE worker
+Terminal 3: uv run rouge                 # ROUGE CLI (chat mode)
 ```
+
+For chat-only mode (no workflows), just run `uv run rouge` in a single terminal.
 
 ## Architecture
 
@@ -356,13 +424,19 @@ ROUGE uses a multi-layered architecture:
 ```
 +------------------------------------------------------+
 |                    CLI (main.py)                      |
-|  argparse commands: run | execute | list | deliverables|
+|  Config Wizard -> Chat Mode | run | execute | worker |
 +------------------------------------------------------+
          |                    |
          v                    v
 +------------------+  +------------------+
-|   Temporal       |  |   MCP Server     |
-|   Workflows      |  |   (tools)        |
+|   Chat Mode      |  |   Temporal       |
+|   (REPL/Router)  |  |   Workflows      |
++------------------+  +------------------+
+         |                    |
+         v                    v
++------------------+  +------------------+
+|   Skills System  |  |   MCP Server     |
+|   (markdown)     |  |   (tools)        |
 +------------------+  +------------------+
          |                    |
          v                    v
@@ -373,15 +447,18 @@ ROUGE uses a multi-layered architecture:
          |
          v
 +------------------+
-|   Ollama (LLM)   |
+| Ollama / Groq    |
+|   (LLM)          |
 +------------------+
 ```
 
-1. **CLI Layer** (`main.py`): Parses commands, collects user input, starts workflows
-2. **Orchestration Layer** (Temporal): Manages durable workflows with fault tolerance, retries, and parallel execution
-3. **Reasoning Layer** (LangGraph): Powers intelligent agents with "Reason-Act" loops and tool-use
-4. **Tooling Layer** (MCP + Tools): Provides agents with `TestingTools` and `DevOpsTools` for real operations
-5. **Agent Layer**: 28 specialized agents organized into phases with dependency ordering
+1. **CLI Layer** (`main.py`): Configuration wizard, chat mode entry, workflow commands
+2. **Chat Layer** (`chat/`): REPL, command parser, query router, token tracking, session management
+3. **Skills Layer** (`skills/`): Markdown-based custom automation skills with trigger keywords
+4. **Orchestration Layer** (Temporal): Manages durable workflows with fault tolerance, retries, and parallel execution
+5. **Reasoning Layer** (LangGraph): Powers intelligent agents with "Reason-Act" loops and tool-use
+6. **Tooling Layer** (MCP + Tools): Provides agents with `TestingTools` and `DevOpsTools` for real operations
+7. **LLM Layer**: Ollama (local, private) or Groq (cloud, fast) with live token tracking
 
 ### Workflow Types
 
@@ -499,6 +576,9 @@ tests/
   conftest.py                      # Shared fixtures (temp dirs, mocks, tool instances)
   test_unit_agents.py              # 24 tests - agent registry, phases, prerequisites, naming
   test_unit_tools.py               # 14 tests - TestingTools and DevOpsTools methods
+  test_chat_mode.py                # 28 tests - NEW: command parsing, token tracking, config
+  test_skills.py                   # 14 tests - NEW: skills loading, parsing, management
+  test_main_integration.py         # 10 tests - NEW: component integration tests
   test_integration_workflows.py    # 12 tests - Temporal workflow structure and execution
   test_e2e_full_automation.py      # 19 tests - full automation pipeline validation
   test_activities.py               #  1 test  - Temporal activity execution
@@ -506,6 +586,10 @@ tests/
   test_config_parser.py            #  2 tests - configuration parsing
   test_prompt_manager.py           #  2 tests - prompt template loading
 ```
+
+**Total: 127 tests** (all passing ✅)
+
+For detailed testing information, see [docs/TESTING.md](docs/TESTING.md).
 
 ### CI/CD Pipeline
 
@@ -537,12 +621,36 @@ uv run mypy src/rouge --ignore-missing-imports
 ```
 rouge/
   src/rouge/
-    main.py                        # CLI entry point (argparse, interactive mode)
+    main.py                        # CLI entry point (config wizard, chat mode, workflows)
     session_manager.py             # Agent registry (28 agents, phases, prerequisites)
+    chat/                          # NEW: Interactive chat mode
+      __init__.py
+      repl.py                      # Chat REPL loop
+      chat_session.py              # Conversation history and LLM interaction
+      command_parser.py            # /commands and ? parsing
+      router.py                    # Query intent classification
+      token_tracker.py             # Live token usage tracking
+    skills/                        # NEW: Custom skills system
+      __init__.py
+      loader.py                    # Markdown skill file parsing
+      executor.py                  # Skill execution via LLM
+      example_skill.md             # Example skill template
+    ui/                            # NEW: Terminal UI components
+      __init__.py
+      live_display.py              # Rich-based live display with token stats
     config/
+      __init__.py
       parser.py                    # RougeSettings (pydantic-settings, .env support)
+      manager.py                   # YAML config persistence (~/.rouge/config.yaml)
+      wizard.py                    # Interactive setup wizard
     agents/
       ollama.py                    # LangGraphOllamaAgent (LangGraph + Ollama)
+      llm_agent.py                 # Multi-provider LLM agent (Ollama + Groq)
+    services/
+      llm_provider.py              # LLM provider abstraction (Ollama, Groq)
+      agent_execution.py           # Agent execution service
+      git_manager.py               # Git operations
+      prompt_manager.py            # Prompt template loading
     temporal/
       workflows.py                 # 4 Temporal workflow definitions
       activities.py                # Temporal activity functions
@@ -556,18 +664,23 @@ rouge/
     types/
       models.py                    # AgentDefinition, PhaseName types
       temporal_types.py            # Workflow input/output dataclasses
-    services/
-      agent_execution.py           # Agent execution service
-      git_manager.py               # Git operations
-      prompt_manager.py            # Prompt template loading
     utils/
       temporal_downloader.py       # Temporal CLI auto-download
+      worker_check.py              # Temporal worker health check
+      file_picker.py               # GUI file picker with headless fallback
   prompts/
     testing/                       # 13 prompt templates for testing agents
     devops/                        # 15 prompt templates for DevOps agents
     shared/                        # Shared context files
   tests/                           # Unit, integration, and E2E tests
-  .github/workflows/tests.yml     # CI/CD pipeline
+  docs/                            # Documentation
+    CHAT_MODE.md                   # Chat mode guide
+    SKILLS.md                      # Skills system documentation
+    WORKER_SETUP.md                # Worker setup guide
+    TESTING.md                     # Testing guide
+  .github/workflows/
+    ci.yml                         # Lint and standard tests
+    tests.yml                      # Full CI/CD pipeline
   pyproject.toml                   # Dependencies and tool config
 ```
 

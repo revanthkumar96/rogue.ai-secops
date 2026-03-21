@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import io
 import os
 import sys
 from datetime import datetime
@@ -28,9 +29,18 @@ from .types.temporal_types import (
     TestAutomationInput,
     UnifiedDevOpsInput,
 )
+from .utils.file_picker import select_directory_interactive
 from .utils.temporal_downloader import ensure_temporal_cli
 
-console = Console()
+# Force UTF-8 output on Windows to avoid cp1252 encoding errors with Unicode chars
+if sys.platform == "win32" and not isinstance(sys.stdout, io.TextIOWrapper):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+console = Console(force_terminal=True)
 
 
 class APIUsageTracker:
@@ -88,16 +98,28 @@ usage_tracker = APIUsageTracker()
 
 
 def print_banner():
-    banner = """
+    try:
+        banner = """
     ██████╗  ██████╗ ██╗   ██╗ ██████╗ ███████╗
     ██╔══██╗██╔═══██╗██║   ██║██╔════╝ ██╔════╝
     ██████╔╝██║   ██║██║   ██║██║  ███╗█████╗
     ██╔══██╗██║   ██║██║   ██║██║   ██║██╔══╝
     ██║  ██║╚██████╔╝╚██████╔╝╚██████╔╝███████╗
     ╚═╝  ╚═╝ ╚═════╝  ╚═════╝  ╚═════╝ ╚══════╝
-    """
-    subtitle = "DevOps & Testing Automation Platform\nConvert Unstructured Projects → Deployable Applications"
-    console.print(Panel(banner, subtitle=subtitle, border_style="bold cyan"))
+        """
+        subtitle = "DevOps & Testing Automation Platform\nConvert Unstructured Projects -> Deployable Applications"
+        console.print(Panel(banner, subtitle=subtitle, border_style="bold cyan"))
+    except UnicodeEncodeError:
+        # Fallback for terminals that can't render Unicode box-drawing chars
+        banner = """
+    ____   ___  _   _  ____ _____
+   |  _ \\ / _ \\| | | |/ ___| ____|
+   | |_) | | | | | | | |  _|  _|
+   |  _ <| |_| | |_| | |_| | |___
+   |_| \\_\\\\___/ \\___/ \\____|_____|
+        """
+        subtitle = "DevOps & Testing Automation Platform"
+        console.print(Panel(banner, subtitle=subtitle, border_style="bold cyan"))
 
 
 async def fetch_available_models(base_url: str) -> List[str]:
@@ -148,9 +170,11 @@ async def get_test_automation_input():
         or "Please enter a valid URL",
     ).ask_async()
 
-    repo_path = await questionary.path(
-        "📂 Source code repository path:", default=os.getcwd(), only_directories=True
-    ).ask_async()
+    repo_path = await select_directory_interactive(
+        prompt="📂 Source code repository path:",
+        default=os.getcwd(),
+        instruction="Select the repository directory"
+    )
 
     # Test types selection
     test_types = await questionary.checkbox(
@@ -208,7 +232,11 @@ async def get_infrastructure_input():
         ],
     ).ask_async()
 
-    repo_path = await questionary.path("📂 Output repository path:", default=os.getcwd(), only_directories=True).ask_async()
+    repo_path = await select_directory_interactive(
+        prompt="📂 Output repository path:",
+        default=os.getcwd(),
+        instruction="Select the output directory for infrastructure code"
+    )
 
     return InfrastructureInput(
         cloud_provider=cloud_provider,
@@ -231,7 +259,11 @@ async def get_cicd_input():
         "Deployment strategy:", choices=["blue-green", "canary", "rolling", "recreate"], default="blue-green"
     ).ask_async()
 
-    repo_path = await questionary.path("📂 Source code repository path:", default=os.getcwd(), only_directories=True).ask_async()
+    repo_path = await select_directory_interactive(
+        prompt="📂 Source code repository path:",
+        default=os.getcwd(),
+        instruction="Select the source code repository directory"
+    )
 
     environments = await questionary.checkbox(
         "Target environments:",
@@ -265,7 +297,11 @@ async def get_unified_input():
         "🌐 Application URL:", validate=lambda text: (text.startswith("http://") or text.startswith("https://")) or "Valid URL required"
     ).ask_async()
 
-    repo_path = await questionary.path("📂 Repository path:", default=os.getcwd(), only_directories=True).ask_async()
+    repo_path = await select_directory_interactive(
+        prompt="📂 Repository path:",
+        default=os.getcwd(),
+        instruction="Select the repository directory"
+    )
 
     cloud_provider = await questionary.select("Cloud provider:", choices=["aws", "azure", "gcp"]).ask_async()
 
@@ -408,6 +444,30 @@ async def monitor_workflow(handle: WorkflowHandle, workflow_type: str):
     return True  # Indicate workflow completed successfully
 
 
+async def check_worker_health(client: Client, task_queue: str = "rouge-task-queue") -> bool:
+    """Check if any workers are polling the task queue."""
+    try:
+        # Use the gRPC DescribeTaskQueue API to check for pollers
+        from temporalio.api.taskqueue.v1 import TaskQueue as TaskQueueProto
+        from temporalio.api.workflowservice.v1 import DescribeTaskQueueRequest
+
+        request = DescribeTaskQueueRequest(
+            namespace="default",
+            task_queue=TaskQueueProto(name=task_queue),
+        )
+        desc = await client.workflow_service.describe_task_queue(request)
+        pollers = getattr(desc, "pollers", [])
+        return len(pollers) > 0
+    except Exception:
+        return False
+
+
+async def start_worker():
+    """Start the ROUGE Temporal worker."""
+    from .temporal.worker import run_worker
+    await run_worker()
+
+
 async def start_workflow(workflow_type: str, input_data, model: Optional[str] = None):
     """Start the selected workflow"""
     settings = RougeSettings()
@@ -430,6 +490,23 @@ async def start_workflow(workflow_type: str, input_data, model: Optional[str] = 
         console.print("\n[bold yellow]💡 Tip:[/bold yellow] Start Temporal dev server:")
         console.print("   Run: [bold]temporal server start-dev[/bold]")
         return None
+
+    # Check if workers are running
+    with console.status("[bold green]Checking for active workers..."):
+        has_workers = await check_worker_health(client)
+
+    if not has_workers:
+        console.print("\n[bold red]❌ No Workers Running[/bold red]")
+        console.print("[yellow]There are no workers polling the [bold]rouge-task-queue[/bold] Task Queue.[/yellow]")
+        console.print("\n[bold cyan]To fix this, open a new terminal and run:[/bold cyan]")
+        console.print("   [bold]uv run rouge worker[/bold]")
+        console.print("\n[dim]The worker must be running before workflows can execute.[/dim]")
+
+        start_anyway = await questionary.confirm(
+            "Start workflow anyway? (worker may start later)", default=False
+        ).ask_async()
+        if not start_anyway:
+            return None
 
     # Select appropriate workflow
     workflow_map = {
@@ -504,18 +581,54 @@ async def interactive_session():
 
     console.print("\n[bold cyan]🚀 Initializing ROUGE...[/bold cyan]")
 
-    # Fetch available models
-    with console.status("[bold green]Fetching available models from Ollama..."):
-        available_models = await fetch_available_models(settings.ollama_base_url)
+    # Select LLM provider
+    provider_choice = await questionary.select(
+        "Select LLM provider:",
+        choices=[
+            questionary.Choice("🦙 Ollama (Local, Free)", value="ollama"),
+            questionary.Choice("⚡ Groq (Cloud, Fast)", value="groq"),
+        ],
+        default="ollama"
+    ).ask_async()
 
-    if not available_models:
-        console.print("[yellow]No models found. Pull a model first: ollama pull llama3.1:8b[/yellow]")
-        selected_model = await questionary.text("Enter model name manually:").ask_async()
-    else:
-        console.print(f"[green]Found {len(available_models)} model(s) on this machine[/green]")
-        selected_model = await questionary.select(
-            "Select Ollama model:", choices=available_models, default=available_models[0]
+    selected_model = None
+
+    if provider_choice == "ollama":
+        # Fetch available Ollama models
+        with console.status("[bold green]Fetching available models from Ollama..."):
+            available_models = await fetch_available_models(settings.ollama_base_url)
+
+        if not available_models:
+            console.print("[yellow]No models found. Pull a model first: ollama pull llama3.1:8b[/yellow]")
+            selected_model = await questionary.text("Enter model name manually:").ask_async()
+        else:
+            console.print(f"[green]Found {len(available_models)} model(s) on this machine[/green]")
+            selected_model = await questionary.select(
+                "Select Ollama model:", choices=available_models, default=available_models[0]
+            ).ask_async()
+
+        # Update settings for Ollama
+        os.environ["LLM_PROVIDER"] = "ollama"
+
+    elif provider_choice == "groq":
+        # Get Groq API key
+        api_key = settings.groq_api_key or await questionary.password(
+            "Enter Groq API key:",
+            validate=lambda k: len(k) > 0 or "API key required"
         ).ask_async()
+
+        os.environ["GROQ_API_KEY"] = api_key
+        os.environ["LLM_PROVIDER"] = "groq"
+
+        # Show available Groq models
+        from .services.llm_provider import GROQ_MODELS
+        selected_model = await questionary.select(
+            "Select Groq model:",
+            choices=GROQ_MODELS,
+            default="mixtral-8x7b-32768"
+        ).ask_async()
+
+        console.print(f"[green]Using Groq model: {selected_model}[/green]")
 
     # Main workflow loop
     while True:
@@ -717,15 +830,17 @@ async def cmd_view_deliverables(deliverables_dir: str = "deliverables"):
 
 
 async def async_main():
-    ensure_temporal_cli()
-    print_banner()
-
     parser = argparse.ArgumentParser(
         prog="rouge",
         description="ROUGE: DevOps & Testing Automation Platform",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+  rouge                              # Start chat mode (default)
+  rouge --chat                       # Start chat mode explicitly
+  rouge --reset-config               # Reconfigure ROUGE
+  rouge worker                       # Start the Temporal worker
+
   rouge run test                     # Generate test automation
   rouge run infra                    # Generate infrastructure
   rouge execute tests                # Run generated tests
@@ -746,6 +861,9 @@ Examples:
     run_parser.add_argument("--url", help="Target URL")
     run_parser.add_argument("--repo", help="Repository path", default=os.getcwd())
 
+    # worker command
+    subparsers.add_parser("worker", help="Start the ROUGE Temporal worker (required for workflows)")
+
     # execute command
     exec_parser = subparsers.add_parser("execute", help="Execute generated code")
     exec_parser.add_argument("target", choices=["tests", "terraform", "pipeline"], help="What to execute")
@@ -759,15 +877,64 @@ Examples:
     deliv_parser.add_argument("--dir", default="deliverables", help="Deliverables directory")
 
     # Global flags
+    parser.add_argument("--chat", action="store_true", help="Start chat mode (default)")
+    parser.add_argument("--reset-config", action="store_true", help="Reset configuration and run setup wizard")
     parser.add_argument("-ollama", action="store_true", help="Use Ollama for LLM inference")
-    parser.add_argument("-model", type=str, help="Specific Ollama model name")
+    parser.add_argument("-groq", action="store_true", help="Use Groq for LLM inference")
+    parser.add_argument("-model", type=str, help="Specific model name (Ollama or Groq)")
+    parser.add_argument("-groq-key", type=str, help="Groq API key")
     parser.add_argument("--non-interactive", action="store_true", help="Run without prompts")
 
     args = parser.parse_args()
 
+    # Worker command: skip banner, start worker immediately
+    if args.command == "worker":
+        ensure_temporal_cli()
+        console.print("[bold cyan]Starting ROUGE worker...[/bold cyan]")
+        console.print("[dim]The worker must stay running while workflows execute.[/dim]")
+        console.print("[dim]Press Ctrl+C to stop the worker.[/dim]\n")
+        await start_worker()
+        return
+
+    # Print banner for all non-worker commands
+    print_banner()
+
+    # Handle config reset
+    if args.reset_config:
+        from .config.manager import ConfigManager
+        from .config.wizard import ConfigWizard
+
+        wizard = ConfigWizard(console)
+        config_manager = await wizard.run()
+        console.print("[green]Configuration updated successfully![/green]")
+        return
+
     # Handle model selection
     selected_model = None
-    if args.ollama or args.model:
+    if args.groq or (args.model and args.groq_key):
+        # Use Groq provider
+        os.environ["LLM_PROVIDER"] = "groq"
+        settings = RougeSettings()
+
+        api_key = args.groq_key or settings.groq_api_key
+        if not api_key:
+            console.print("[red]Groq API key required. Use -groq-key or set GROQ_API_KEY env var[/red]")
+            return
+
+        os.environ["GROQ_API_KEY"] = api_key
+
+        if args.model:
+            selected_model = args.model
+            console.print(f"[cyan]Using Groq model: {selected_model}[/cyan]")
+        else:
+            from .services.llm_provider import GROQ_MODELS
+            selected_model = await questionary.select(
+                "Select Groq model:", choices=GROQ_MODELS, default="mixtral-8x7b-32768"
+            ).ask_async()
+
+    elif args.ollama or args.model:
+        # Use Ollama provider
+        os.environ["LLM_PROVIDER"] = "ollama"
         if args.model:
             selected_model = args.model
             console.print(f"[cyan]Using Ollama model: {selected_model}[/cyan]")
@@ -788,6 +955,8 @@ Examples:
 
     # Route to appropriate command
     if args.command == "run":
+        # Ensure Temporal CLI is available for workflow commands
+        ensure_temporal_cli()
         # Run workflow
         workflow_type = args.workflow
 
@@ -832,15 +1001,49 @@ Examples:
         await cmd_view_deliverables(args.dir)
 
     else:
-        # No command - interactive mode
-        try:
-            await interactive_session()
-            console.print("\n[bold green]👋 Thank you for using ROUGE![/bold green]")
-            console.print("[dim]Your automated projects are ready for deployment.[/dim]\n")
-            usage_tracker.display_summary()
-        except KeyboardInterrupt:
-            console.print("\n[yellow]Session interrupted.[/yellow]")
-            sys.exit(0)
+        # No command - check if should enter chat mode
+        from pathlib import Path
+
+        from .config.manager import ConfigManager
+
+        config_path = Path.home() / ".rouge" / "config.yaml"
+
+        # If config exists and no specific command, enter chat mode
+        if config_path.exists() and not any([args.ollama, args.groq, args.model]):
+            # Chat mode
+            try:
+                from .chat.repl import ChatREPL
+                from .config.wizard import ConfigWizard
+
+                config_manager = ConfigManager()
+
+                # Check if we need to run wizard
+                if not config_path.exists():
+                    wizard = ConfigWizard(console)
+                    config_manager = await wizard.run()
+
+                # Start chat REPL
+                chat_repl = ChatREPL(config_manager, console)
+                await chat_repl.run()
+
+            except KeyboardInterrupt:
+                console.print("\n[yellow]Chat session interrupted.[/yellow]")
+                sys.exit(0)
+            except Exception as e:
+                console.print(f"\n[red]Error in chat mode: {e}[/red]")
+                import traceback
+                traceback.print_exc()
+                sys.exit(1)
+        else:
+            # Legacy interactive mode (workflow selection)
+            try:
+                await interactive_session()
+                console.print("\n[bold green]👋 Thank you for using ROUGE![/bold green]")
+                console.print("[dim]Your automated projects are ready for deployment.[/dim]\n")
+                usage_tracker.display_summary()
+            except KeyboardInterrupt:
+                console.print("\n[yellow]Session interrupted.[/yellow]")
+                sys.exit(0)
 
 
 def main():
