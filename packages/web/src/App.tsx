@@ -2,6 +2,7 @@ import { createSignal, onMount, ParentComponent, Show } from "solid-js"
 import { Header } from "./components/Header"
 import { Sidebar } from "./components/Sidebar"
 import { Setup } from "./components/Setup"
+import { CommandPalette } from "./components/CommandPalette"
 
 export const App: ParentComponent = (props) => {
   const [connected, setConnected] = createSignal(false)
@@ -93,8 +94,10 @@ export const App: ParentComponent = (props) => {
           display: "flex", 
           "flex-direction": "column", 
           height: "100vh",
-          background: "radial-gradient(circle at top right, var(--bg-secondary), var(--bg-primary))"
+          width: "100%",
+          background: "radial-gradient(circle at top right, #111111, #050505)"
         }}>
+          <CommandPalette />
           <Header connected={connected()} />
           <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
             <Sidebar />

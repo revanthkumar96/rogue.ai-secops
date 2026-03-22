@@ -4,6 +4,7 @@ import { Ollama } from "../provider/ollama.js"
 import { Provider, type Message } from "../provider/provider.js"
 import { Log } from "../util/log.js"
 import { lazy } from "../util/lazy.js"
+import { Config } from "../config/config.js"
 import fs from "fs/promises"
 import path from "path"
 import { fileURLToPath } from "url"
@@ -32,6 +33,7 @@ export const AgentRequest = z.object({
     "infrastructure",
     "incident",
     "database",
+    "router",
   ]),
   task: z.string(),
   context: z.record(z.any()).optional(),
@@ -52,6 +54,7 @@ export const AgentResult = z.object({
     "infrastructure",
     "incident",
     "database",
+    "router",
   ]),
   output: z.string(),
   success: z.boolean(),
@@ -187,6 +190,12 @@ export namespace Agent {
           { tool: "ReadFile", action: "allow" }
         ],
       },
+      router: {
+        name: "router",
+        description: "Parent Routing Agent - Directs tasks to specialists",
+        tools: [],
+        permissions: [],
+      },
     }
 
     return {
@@ -210,18 +219,60 @@ export namespace Agent {
       "infrastructure",
       "incident",
       "database",
+      "router",
     ]
+  }
+
+  /**
+   * Determine the best specialist for a task
+   */
+  export async function routeAgent(task: string): Promise<AgentType> {
+    try {
+      const provider = await Ollama.Default()
+      const specialistAgents = listAgents().filter(a => a !== "router")
+      
+      const prompt = `You are the ROUGE Parent Router.
+Categorize the request into the most appropriate specialist:
+${specialistAgents.join(", ")}
+
+User Request: "${task}"
+
+Respond ONLY with the agent name.`
+
+      const response = await provider.chat({
+        messages: [Provider.system(prompt)],
+        stream: false,
+      })
+      
+      const choice = response.content.trim().toLowerCase() as AgentType
+      if (listAgents().includes(choice)) return choice
+      return "analyze"
+    } catch (e) {
+      return "analyze"
+    }
   }
 
   /**
    * Execute agent task
    */
   export async function execute(request: AgentRequest): Promise<AgentResult> {
-    log.info(`Executing ${request.type} agent: ${request.task}`)
+    let agentType = request.type
+    let task = request.task
+
+    // If router, determine the actual agent
+    if (agentType === "router") {
+        log.info(`Routing task: ${task}`)
+        agentType = await routeAgent(task)
+        log.info(`Routed to specialist: ${agentType}`)
+    }
+
+    log.info(`Executing ${agentType} agent: ${task}`)
 
     try {
-      const capability = await getCapabilities(request.type)
+      const capability = await getCapabilities(agentType)
       const provider = await Ollama.Default()
+      const config = await Config.load()
+      const workspace = config.workspace || "."
 
       // Check if provider is available
       const available = await provider.isAvailable()
@@ -231,14 +282,14 @@ export namespace Agent {
 
       // Build messages
       const messages: Message[] = [
-        Provider.system(`${capability.prompt}\n\nProject Environment:\nYou are working in a NodeJS/Bun monorepo. Use tools to explore and act.\nAvailable Tools: ${ToolRegistry.listTools().join(", ")}\n\nIMPORTANT: To call a tool, use the following format:\nTool: ToolName\nInput: {"arg1": "val1"}\n\nYou can chain multiple thoughts and tool calls. Wait for Observation after each call.`),
-        Provider.user(request.task),
+        Provider.system(`${capability.prompt}\n\nProject Environment:\nYou are working in a NodeJS/Bun monorepo.\nActive Workspace: ${workspace}\n\nUse tools to explore and act.\nAvailable Tools: ${ToolRegistry.listTools().join(", ")}\n\nIMPORTANT: To call a tool, use the following format:\nTool: ToolName\nInput: {"arg1": "val1"}\n\nYou can chain multiple thoughts and tool calls. Wait for Observation after each call.`),
+        Provider.user(task),
       ]
 
-      // Add project context (simple file list)
+      // Add project context (simple file list - top level only for performance)
       try {
-        const files = await fs.readdir(".", { recursive: true }).then(f => f.slice(0, 50).join("\n"))
-        messages.push(Provider.user(`Current Project Structure (Partial):\n${files}`))
+        const files = await fs.readdir(workspace).then(f => f.slice(0, 50).filter(item => !item.includes("node_modules")).join("\n"))
+        messages.push(Provider.user(`Current Project Structure at ${workspace} (Top Level):\n${files}`))
       } catch (e) {}
 
       // Add context if provided
@@ -286,7 +337,7 @@ export namespace Agent {
         output: finalOutput,
         success: true,
         metadata: {
-          model: (await provider.chat({ messages: [], stream: false })).model, // Get model name
+          model: provider.model, // Get model name
           iterations: iteration
         },
       }

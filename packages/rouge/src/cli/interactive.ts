@@ -1,4 +1,6 @@
 import readline from "readline"
+import fs from "fs/promises"
+import path from "path"
 import { UI } from "./ui/index.js"
 import { Agent } from "../agent/agent.js"
 import { Config } from "../config/config.js"
@@ -29,29 +31,39 @@ export namespace Interactive {
     // Load configuration
     state = {
       config: await Config.load(),
-      selectedAgent: (await Config.get("agents")).default as AgentType,
+      selectedAgent: "router",
       connected: false,
     }
 
-    // Show welcome
-    showWelcome()
-
-    // Test connection
-    await testConnection()
+    // Show welcome & Init
+    await showWelcome()
 
     // Main loop
     await mainLoop()
   }
 
-  function showWelcome() {
-    console.clear()
-    UI.nl()
+  async function showWelcome() {
+    UI.clear()
     console.log(UI.logo())
+    
+    const bootSteps = [
+      "Initializing Neural Core",
+      "Mounting Agent Protocols",
+      "Indexing Workspace Environment",
+      "Establishing Secure Ollama Uplink"
+    ]
+
+    for (const step of bootSteps) {
+      await new Promise(r => setTimeout(r, 100))
+      UI.step(`${step}...`)
+    }
+
     UI.nl()
-    UI.header("Interactive Mode")
+    await testConnection()
     UI.nl()
-    UI.info("Welcome to Rouge DevOps Automation!")
+    UI.info("ROUGE OS v1.0.0 is online and awaiting transmission.")
     UI.nl()
+    UI.divider()
   }
 
   async function testConnection() {
@@ -77,12 +89,9 @@ export namespace Interactive {
   async function mainLoop() {
     while (true) {
       UI.nl()
-      showMenu()
-      UI.nl()
+      const input = await prompt(`[${state.selectedAgent}] @ Rouge > `)
 
-      const choice = await prompt("Select option (or 'q' to quit): ")
-
-      if (choice === "q" || choice === "quit") {
+      if (input === null || input === "q" || input === "quit" || input === "exit") {
         UI.nl()
         UI.success("Goodbye!")
         UI.nl()
@@ -90,30 +99,88 @@ export namespace Interactive {
         process.exit(0)
       }
 
-      await handleChoice(choice)
+      const trimmedInput = input.trim()
+      if (trimmedInput.startsWith("/") || trimmedInput.startsWith("@") || trimmedInput === "?" || trimmedInput === "") {
+        await handleSlashCommand(trimmedInput)
+      } else {
+        // Natural language task for the selected agent
+        await executeTask(trimmedInput)
+      }
     }
   }
 
-  function showMenu() {
-    UI.divider()
-    UI.nl()
-    UI.info("Current Settings:")
-    UI.kv("Model", state.config.ollama.model)
-    UI.kv("Agent", state.selectedAgent)
-    UI.kv("Status", state.connected ? "✅ Connected" : "❌ Disconnected")
-    UI.nl()
-    UI.divider()
-    UI.nl()
+  async function handleSlashCommand(input: string) {
+    if (input === "?" || input === "/" || input === "/help" || input === "") {
+        const choice = await UI.select([
+            { label: `Change Model      - Currently: ${state.config.ollama.model}`, value: "1" },
+            { label: `Select Agent      - Currently: ${state.selectedAgent}`, value: "2" },
+            { label: "View Stats        - System dashboard", value: "3" },
+            { label: "Test Connection   - Verify Ollama", value: "4" },
+            { label: "View Config       - Full detail", value: "5" },
+            { label: "List Agents       - Available builders", value: "6" },
+            { label: `Set Workspace     - Currently: ${state.config.workspace || "CWD"}`, value: "7" },
+            { label: "Close Palette", value: "q" }
+        ], "ROUGE Command Palette")
 
-    UI.info("Options:")
-    UI.item("1. Change Ollama Model")
-    UI.item("2. Select Agent")
-    UI.item("3. Execute Agent Task")
-    UI.item("4. Test Connection")
-    UI.item("5. View Configuration")
-    UI.item("6. List All Agents")
-    UI.item("q. Quit")
-    UI.nl()
+        if (choice && choice !== "q") {
+            await handleChoice(choice)
+        }
+        return
+    }
+
+    if (input === "@") {
+        const agents = Agent.listAgents()
+        const choice = await UI.select(
+            agents.map(a => ({ label: a, value: a })),
+            "Select Agent"
+        )
+        if (choice) {
+            state.selectedAgent = choice as AgentType
+            UI.success(`Selected agent: ${state.selectedAgent}`)
+        }
+        return
+    }
+
+    // Handle number shortcuts if they start with /
+    const shortcut = input.startsWith("/") ? input.substring(1) : input
+    if (["1", "2", "3", "4", "5", "6", "7"].includes(shortcut)) {
+        await handleChoice(shortcut)
+        return
+    }
+
+    if (input.startsWith("/config workspace ")) {
+      const workspace = input.replace("/config workspace ", "").trim()
+      state.config.workspace = workspace
+      await Config.save(state.config)
+      UI.success(`Workspace updated to: ${workspace}`)
+      return
+    }
+
+    if (input.startsWith("@") || input.startsWith("/agent ")) {
+        const parts = input.startsWith("@") 
+            ? input.substring(1).split(" ") 
+            : input.replace("/agent ", "").split(" ")
+        
+        const agentName = parts[0] as AgentType
+        const task = parts.slice(1).join(" ")
+
+        if (!Agent.listAgents().includes(agentName)) {
+            UI.error(`Unknown agent: ${agentName}`)
+            return
+        }
+
+        if (!task) {
+            UI.info(`Selected agent: ${agentName}. Now enter your task.`)
+            state.selectedAgent = agentName
+            return
+        }
+
+        // Execute directly
+        await executeTask(task, agentName)
+        return
+    }
+
+    UI.warn(`Unknown command: ${input}. Type ? for help.`)
   }
 
   async function handleChoice(choice: string) {
@@ -125,7 +192,13 @@ export namespace Interactive {
         await selectAgent()
         break
       case "3":
-        await executeTask()
+        // Show status/stats
+        UI.nl()
+        UI.header("System Status")
+        UI.kv("Ollama", state.connected ? "READY" : "OFFLINE")
+        UI.kv("Model", state.config.ollama.model)
+        UI.kv("Workspace", state.config.workspace || "Not set")
+        UI.nl()
         break
       case "4":
         await testConnection()
@@ -136,17 +209,66 @@ export namespace Interactive {
       case "6":
         await listAgents()
         break
+      case "7":
+        await setWorkspace()
+        break
       default:
         UI.warn("Invalid option")
     }
   }
 
-  async function changeModel() {
+  async function setWorkspace() {
     UI.nl()
-    UI.header("Change Ollama Model")
+    UI.header("Set Project Workspace")
+    UI.nl()
+    UI.info("Current Workspace: " + (state.config.workspace || "Not set"))
     UI.nl()
 
-    // Get available models
+    const startDir = state.config.workspace || process.cwd()
+    const selected = await browseFiles(startDir)
+
+    if (selected) {
+      state.config.workspace = selected
+      await Config.save(state.config)
+      UI.success(`Workspace set to: ${selected}`)
+    } else {
+      UI.info("No changes made to workspace.")
+    }
+  }
+
+  async function browseFiles(startPath: string): Promise<string | null> {
+    let currentPath = path.resolve(startPath)
+    
+    while (true) {
+      try {
+        const entries = await fs.readdir(currentPath, { withFileTypes: true })
+        const folders = entries.filter(e => e.isDirectory() && !e.name.startsWith(".")).map(e => e.name).sort()
+        
+        const items = [
+            { label: ".. [Go Up]", value: "up" },
+            ...folders.map(f => ({ label: `📁 ${f}`, value: f })),
+            { label: "✅ SELECT CURRENT FOLDER", value: "select" },
+            { label: "❌ CANCEL", value: "cancel" }
+        ]
+
+        const choice = await UI.select(items, `Browsing: ${currentPath}`)
+        
+        if (!choice || choice === "cancel") return null
+        if (choice === "select") return currentPath
+        if (choice === "up") {
+          currentPath = path.dirname(currentPath)
+          continue
+        }
+
+        currentPath = path.join(currentPath, choice)
+      } catch (err: any) {
+        UI.error(`Access failed: ${err.message}`)
+        return null
+      }
+    }
+  }
+
+  async function changeModel() {
     const spinner = UI.spinner("Fetching available models")
     spinner.start()
 
@@ -156,32 +278,19 @@ export namespace Interactive {
       spinner.succeed(`Found ${models.length} models`)
 
       if (models.length === 0) {
-        UI.warn("No models found. Pull a model first:")
-        UI.item("ollama pull llama3.2:3b")
+        UI.warn("No models found. Pull a model first")
         return
       }
 
-      UI.nl()
-      UI.info("Available models:")
-      models.forEach((model, i) => {
-        UI.item(`${i + 1}. ${model}`)
-      })
-      UI.nl()
+      const choice = await UI.select(
+        models.map(m => ({ label: m, value: m })),
+        "Select Model"
+      )
 
-      const choice = await prompt("Select model number (or Enter to keep current): ")
-
-      if (choice.trim() === "") {
-        UI.info("Keeping current model")
-        return
-      }
-
-      const index = parseInt(choice) - 1
-      if (index >= 0 && index < models.length) {
-        state.config.ollama.model = models[index]
+      if (choice) {
+        state.config.ollama.model = choice
         await Config.save(state.config)
-        UI.success(`Model changed to: ${models[index]}`)
-      } else {
-        UI.warn("Invalid selection")
+        UI.success(`Model changed to: ${choice}`)
       }
     } catch (error: any) {
       spinner.fail("Failed to fetch models")
@@ -190,54 +299,41 @@ export namespace Interactive {
   }
 
   async function selectAgent() {
-    UI.nl()
-    UI.header("Select Agent")
-    UI.nl()
-
     const agents = Agent.listAgents()
+    const choice = await UI.select(
+        agents.map(a => ({ label: a, value: a })),
+        "Select Agent"
+    )
 
-    agents.forEach((agent, i) => {
-      UI.item(`${i + 1}. ${agent}`)
-    })
-    UI.nl()
-
-    const choice = await prompt("Select agent number: ")
-    const index = parseInt(choice) - 1
-
-    if (index >= 0 && index < agents.length) {
-      state.selectedAgent = agents[index]
+    if (choice) {
+      state.selectedAgent = choice as AgentType
       const capability = await Agent.getCapabilities(state.selectedAgent)
       UI.success(`Agent selected: ${state.selectedAgent}`)
       UI.info(capability.description)
-    } else {
-      UI.warn("Invalid selection")
     }
   }
 
-  async function executeTask() {
+  async function executeTask(taskInput?: string, agentOverride?: AgentType) {
     if (!state.connected) {
       UI.error("Not connected to Ollama. Please start Ollama first.")
       return
     }
 
-    UI.nl()
-    UI.header(`Execute ${state.selectedAgent} Agent`)
-    UI.nl()
+    const agentName = agentOverride || state.selectedAgent
+    const task = taskInput || await prompt("Enter task: ")
 
-    const task = await prompt("Enter task: ")
-
-    if (!task.trim()) {
+    if (!task || !task.trim()) {
       UI.warn("Task cannot be empty")
       return
     }
 
     UI.nl()
-    const spinner = UI.spinner(`Executing ${state.selectedAgent} agent`)
+    const spinner = UI.spinner(`Executing ${agentName} agent`)
     spinner.start()
 
     try {
       const result = await Agent.execute({
-        type: state.selectedAgent,
+        type: agentName,
         task,
         stream: false,
       })
@@ -306,11 +402,12 @@ export namespace Interactive {
     }
   }
 
-  function prompt(question: string): Promise<string> {
+  function prompt(question: string): Promise<string | null> {
     return new Promise((resolve) => {
       rl.question(question, (answer) => {
         resolve(answer)
       })
+      rl.on("close", () => resolve(null))
     })
   }
 }

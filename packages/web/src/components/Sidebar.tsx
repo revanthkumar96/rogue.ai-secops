@@ -25,7 +25,7 @@ export const Sidebar: Component = () => {
       style={{
         width: "260px",
         background: "var(--bg-secondary)",
-        "border-right": "1px solid var(--border)",
+        "border-right": "1px solid var(--border-strong)",
         display: "flex",
         "flex-direction": "column",
         height: "100vh",
@@ -90,7 +90,7 @@ export const Sidebar: Component = () => {
         </ul>
       </nav>
 
-      <div style={{ padding: "1rem", "border-top": "1px solid var(--border)" }}>
+      <div style={{ padding: "1rem", "border-top": "1px solid var(--border-strong)" }}>
         <A href="/settings" style={linkStyle(isActive("/settings"))}>
           <span style={{ "margin-right": "0.75rem" }}>⚙️</span> Settings
         </A>

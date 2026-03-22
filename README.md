@@ -12,6 +12,12 @@
 ## Overview
 
 Rouge is a modern DevOps and testing automation platform that uses local LLMs (via Ollama) to provide intelligent automation for infrastructure management, test generation, deployment workflows, and system monitoring.
+### 🖥️ Interactive Mode (TUI)
+Simply run `rouge` with no arguments to start the interactive terminal interface:
+```bash
+bun start # or rouge
+```
+This mode allows you to configure models, set project workspaces, and execute agents interactively.
 
 **Key Features:**
 - 🤖 **AI-Powered Automation** - Local LLM reasoning for intelligent decisions

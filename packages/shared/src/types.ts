@@ -17,6 +17,7 @@ export const AgentType = z.enum([
   "infrastructure",
   "incident",
   "database",
+  "router",
 ])
 export type AgentType = z.infer<typeof AgentType>
 

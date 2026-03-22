@@ -121,6 +121,36 @@ export const SettingsPage: Component = () => {
             </div>
           </div>
 
+          {/* Project Workspace */}
+          <div class="card" style={{ padding: "1.5rem" }}>
+            <div style={{ display: "flex", "align-items": "center", gap: "0.75rem", "margin-bottom": "1.5rem" }}>
+              <span style={{ "font-size": "1.25rem" }}>📁</span>
+              <h2 style={{ margin: 0, "font-size": "1.125rem" }}>Project Workspace</h2>
+            </div>
+            <div style={{ display: "grid", gap: "1.25rem" }}>
+              <div>
+                <label style={{ display: "block", "margin-bottom": "0.5rem", "font-size": "13px", color: "var(--text-tertiary)" }}>
+                  Local Project Path
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. C:\Users\name\Desktop\my-project"
+                  value={config()!.workspace || ""}
+                  onInput={(e) =>
+                    setConfig({
+                      ...config()!,
+                      workspace: e.currentTarget.value,
+                    })
+                  }
+                  style={{ width: "100%", "font-family": "var(--font-family-mono)", "font-size": "13px" }}
+                />
+                <p style={{ "font-size": "12px", color: "var(--text-tertiary)", "margin-top": "0.5rem" }}>
+                  This path will be used as the root for all file and command operations.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Agent Settings */}
           <div class="card" style={{ padding: "1.5rem" }}>
             <div style={{ display: "flex", "align-items": "center", gap: "0.75rem", "margin-bottom": "1.5rem" }}>

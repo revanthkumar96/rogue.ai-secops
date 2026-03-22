@@ -13,7 +13,7 @@ import fs from "fs/promises"
 export const OllamaConfig = z.object({
   url: z.string().url().default("http://localhost:11434"),
   model: z.string().default("llama3.2:3b"),
-  timeout: z.number().default(30000),
+  timeout: z.number().default(300000),
 })
 export type OllamaConfig = z.infer<typeof OllamaConfig>
 
@@ -47,6 +47,7 @@ export const RougeConfig = z.object({
   agents: AgentConfig.default({}),
   workflows: WorkflowConfig.default({}),
   permissions: PermissionConfig.default({}),
+  workspace: z.string().optional(),
 })
 export type RougeConfig = z.infer<typeof RougeConfig>
 

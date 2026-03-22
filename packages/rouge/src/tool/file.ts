@@ -7,6 +7,16 @@ import { $ } from "bun"
 
 const log = Log.create({ service: "tool:file" })
 
+import { Config } from "../config/config.js"
+
+async function resolvePath(p: string): Promise<string> {
+  const config = await Config.load()
+  if (config.workspace && !path.isAbsolute(p)) {
+    return path.join(config.workspace, p)
+  }
+  return p
+}
+
 export const EditFileInput = z.object({
   path: z.string(),
   oldString: z.string(),
@@ -25,11 +35,12 @@ export namespace FileTool {
    * Write content to a file
    */
   export async function writeFile(input: WriteFileInput): Promise<string> {
-    log.info(`Writing file: ${input.path}`)
+    const filePath = await resolvePath(input.path)
+    log.info(`Writing file: ${filePath}`)
     try {
-      await fs.mkdir(path.dirname(input.path), { recursive: true })
-      await fs.writeFile(input.path, input.content, "utf-8")
-      return `Successfully wrote to ${input.path}`
+      await fs.mkdir(path.dirname(filePath), { recursive: true })
+      await fs.writeFile(filePath, input.content, "utf-8")
+      return `Successfully wrote to ${filePath}`
     } catch (error: any) {
       log.error(`Write failed: ${error.message}`)
       return `Error: ${error.message}`
@@ -40,22 +51,23 @@ export namespace FileTool {
    * Edit a file using fuzzy string replacement
    */
   export async function editFile(input: EditFileInput): Promise<string> {
-    log.info(`Editing file: ${input.path}`)
+    const filePath = await resolvePath(input.path)
+    log.info(`Editing file: ${filePath}`)
     try {
-      const content = await fs.readFile(input.path, "utf-8")
+      const content = await fs.readFile(filePath, "utf-8")
       const updatedContent = replaceFuzzy(content, input.oldString, input.newString)
 
       if (content === updatedContent) {
-        return `Error: Could not find exact match for replacement in ${input.path}`
+        return `Error: Could not find exact match for replacement in ${filePath}`
       }
 
-      await fs.writeFile(input.path, updatedContent, "utf-8")
+      await fs.writeFile(filePath, updatedContent, "utf-8")
 
       // Basic diagnostic check (if it's a TS/JS file)
       if (input.path.endsWith(".ts") || input.path.endsWith(".tsx") || input.path.endsWith(".js")) {
         try {
           // A simple 'bun build' on the file to check for syntax errors
-          await $`bun build ${input.path} --no-bundle --outdir /tmp`.quiet()
+          await $`bun build ${filePath} --no-bundle --outdir /tmp`.quiet()
           return `Successfully updated ${input.path} and verified syntax.`
         } catch (error: any) {
           log.warn(`Syntax check failed after edit: ${error.message}`)

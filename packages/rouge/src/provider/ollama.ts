@@ -177,13 +177,12 @@ export class OllamaProvider implements IProvider {
 
 export namespace Ollama {
   /**
-   * Default Ollama provider instance (lazy loaded from config)
+   * Default Ollama provider instance (loaded from current config)
    */
-  export const Default = lazy(async () => {
+  export async function Default(): Promise<OllamaProvider> {
     const config = await Config.get("ollama")
-    log.info(`Initializing Ollama provider: ${config.url}`)
     return new OllamaProvider(config.url, config.model, config.timeout)
-  })
+  }
 
   /**
    * Create a new Ollama provider with custom settings
@@ -196,7 +195,7 @@ export namespace Ollama {
     return new OllamaProvider(
       opts.url || "http://localhost:11434",
       opts.model || "llama3.2:3b",
-      opts.timeout || 30000
+      opts.timeout || 300000
     )
   }
 }

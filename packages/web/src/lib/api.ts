@@ -71,6 +71,7 @@ export interface Config {
     test: string
     bash: string
   }
+  workspace?: string
 }
 
 class ApiClient {
@@ -201,6 +202,11 @@ class ApiClient {
       method: "PATCH",
       body: JSON.stringify(config),
     })
+  }
+
+  async listFiles(path?: string) {
+    const url = path ? `/files/list?path=${encodeURIComponent(path)}` : "/files/list"
+    return this.request<{ path: string; folders: string[] }>(url)
   }
 }
 

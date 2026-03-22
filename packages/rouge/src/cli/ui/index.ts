@@ -1,4 +1,5 @@
 import { EOL } from "os"
+import readline from "readline"
 
 /**
  * UI utilities for Rouge CLI
@@ -25,11 +26,19 @@ export namespace UI {
    * Display Rouge logo
    */
   export function logo(): string {
-    return `${colors.cyan}${colors.bold}
-╦═╗╔═╗╦ ╦╔═╗╦ ╦╔═╗
-╠╦╝║ ║║ ║║ ║║ ║║╣
-╩╚═╚═╝╚═╝╚═╝╚═╝╚═╝
-${colors.reset}${colors.gray}DevOps & Testing Automation Platform${colors.reset}
+    const red = "\x1b[38;5;196m"
+    const darkRed = "\x1b[38;5;88m"
+    const gray = "\x1b[38;5;244m"
+    const glow = "\x1b[38;5;203m"
+
+    return `
+${red}██████╗  ██████╗ ██╗   ██╗ ██████╗ ███████╗
+${red}██╔══██╗██╔═══██╗██║   ██║██╔════╝ ██╔════╝
+${glow}██████╔╝██║   ██║██║   ██║██║  ███╗█████╗  
+${glow}██╔══██╗██║   ██║██║   ██║██║   ██║██╔══╝  
+${darkRed}██║  ██║╚██████╔╝╚██████╔╝╚██████╔╝███████╗
+${darkRed}╚═╝  ╚═╝ ╚═════╝  ╚═════╝  ╚═════╝ ╚══════╝
+${gray}        DEVOPS SECURITY & AUTOMATION OS${colors.reset}
 `
   }
 
@@ -235,5 +244,70 @@ ${colors.reset}${colors.gray}DevOps & Testing Automation Platform${colors.reset}
    */
   export function clear(): void {
     console.clear()
+  }
+
+  /**
+   * Interactive selection menu
+   */
+  export async function select<T>(items: { label: string; value: T }[], title: string): Promise<T | null> {
+    if (items.length === 0) return null
+
+    let selectedIndex = 0
+    const stdin = process.stdin
+    const stdout = process.stdout
+
+    // Ensure keypress events are emitted
+    readline.emitKeypressEvents(stdin)
+    const wasRaw = stdin.isRaw
+    if (stdin.isTTY) stdin.setRawMode(true)
+
+    const render = () => {
+      stdout.write("\x1b[?25l") // Hide cursor
+      stdout.write("\r\x1b[J") // Clear line and below
+      stdout.write(`${colors.cyan}${colors.bold}?${colors.reset} ${colors.bold}${title}${colors.reset}\n`)
+      
+      items.forEach((item, i) => {
+        const isSelected = i === selectedIndex
+        const prefix = isSelected ? `${colors.cyan}❯${colors.reset} ` : "  "
+        const label = isSelected ? `${colors.cyan}${item.label}${colors.reset}` : item.label
+        stdout.write(`${prefix}${label}\n`)
+      })
+      
+      // Move cursor back up for next render
+      stdout.write(`\x1b[${items.length + 1}A\r`)
+    }
+
+    render()
+
+    return new Promise((resolve) => {
+      const onKeypress = (str: string, key: any) => {
+        if (key.name === "up") {
+          selectedIndex = (selectedIndex - 1 + items.length) % items.length
+          render()
+        } else if (key.name === "down") {
+          selectedIndex = (selectedIndex + 1) % items.length
+          render()
+        } else if (key.name === "return") {
+          cleanup()
+          // Move cursor to bottom and clear
+          stdout.write(`\x1b[${items.length + 1}B\r\x1b[J`)
+          stdout.write(`${colors.green}${colors.bold}✔${colors.reset} ${colors.bold}${title}${colors.reset} ${colors.cyan}${items[selectedIndex].label}${colors.reset}\n`)
+          resolve(items[selectedIndex].value)
+        } else if (key.name === "escape" || (key.ctrl && key.name === "c")) {
+          cleanup()
+          stdout.write(`\x1b[${items.length + 1}B\r\x1b[J`)
+          resolve(null)
+        }
+      }
+
+      const cleanup = () => {
+        stdin.removeListener("keypress", onKeypress)
+        if (stdin.isTTY) stdin.setRawMode(wasRaw)
+        stdout.write("\x1b[?25h") // Show cursor
+      }
+
+      stdin.resume()
+      stdin.on("keypress", onKeypress)
+    })
   }
 }

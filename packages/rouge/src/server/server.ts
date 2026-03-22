@@ -5,6 +5,8 @@ import { Log } from "../util/log"
 import { lazy } from "../util/lazy"
 import { registerRoutes } from "./routes/index.js"
 import { Config } from "../config/config.js"
+import fs from "fs/promises"
+import path from "path"
 
 const log = Log.create({ service: "server" })
 
@@ -50,6 +52,17 @@ export namespace Server {
     api.get("/config", async (c) => {
       const config = await Config.load()
       return c.json(config)
+    })
+
+    api.get("/files/list", async (c) => {
+      const dir = c.req.query("path") || process.cwd()
+      try {
+        const entries = await fs.readdir(dir, { withFileTypes: true })
+        const folders = entries.filter(e => e.isDirectory() && !e.name.startsWith(".")).map(e => e.name).sort()
+        return c.json({ path: path.resolve(dir), folders })
+      } catch (err: any) {
+        return c.json({ error: err.message }, 500)
+      }
     })
 
     // Register other routes on the api sub-router

@@ -8,14 +8,14 @@ export const Header: Component<HeaderProps> = (props) => {
   return (
     <header
       style={{
-        background: "var(--surface)",
-        "border-bottom": "1px solid var(--border)",
+        background: "rgba(5, 5, 5, 0.8)",
+        "border-bottom": "1px solid var(--border-strong)",
         padding: "0.75rem 2rem",
         display: "flex",
         "justify-content": "space-between",
         "align-items": "center",
-        "backdrop-filter": "blur(8px)",
-        "-webkit-backdrop-filter": "blur(8px)",
+        "backdrop-filter": "blur(12px)",
+        "-webkit-backdrop-filter": "blur(12px)",
         position: "sticky",
         top: 0,
         "z-index": 100,
