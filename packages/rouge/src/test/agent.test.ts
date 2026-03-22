@@ -21,8 +21,8 @@ describe("Agent System", () => {
     const capabilities = await Agent.getCapabilities("test")
     expect(capabilities.name).toBe("test")
     expect(capabilities.description).toContain("Test")
-    expect(capabilities.tools).toContain("ReadLog")
-    expect(capabilities.permissions).toContain("read")
+    expect(capabilities.tools).toContain("ReadFile")
+    expect(capabilities.permissions.some(p => p.tool === "ReadFile")).toBe(true)
   })
 
   test("should load agent prompts", async () => {

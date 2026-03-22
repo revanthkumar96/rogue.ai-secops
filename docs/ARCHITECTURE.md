@@ -191,6 +191,12 @@ created_at       INTEGER NOT NULL
 
 ---
 
+### Automation Engine
+- **Fuzzy File Editing**: Implements a multi-strategy matching engine (Exact, Trimmed, Block-Anchor) to robustly modify code regardless of minor formatting drift.
+- **Secure Bash Parser**: Every terminal command is pre-parsed to detect chaining (`&&`, `;`) and validated against strict permission sets.
+- **LSP Feedback Loop**: Automated syntax verification (using `bun build`) triggers after edits to prevent introduction of broken code.
+- **GitHub Sync**: Native integration for event-driven automation (Issue comments, PR updates) with automated commit/push lifecycle.
+
 ## AI Integration
 
 ### Ollama Client

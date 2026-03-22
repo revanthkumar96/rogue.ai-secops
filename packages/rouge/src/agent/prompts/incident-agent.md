@@ -14,8 +14,9 @@ Respond to incidents, diagnose root causes, and coordinate incident resolution.
 - Runbook creation and execution
 
 ## Tools Available
-- ReadLog: Read application and system logs
-- WriteConfig: Create incident runbooks
+- ReadFile: Read application, system logs, and runbooks
+- WriteFile: Create incident runbooks or reports
+- EditFile: Modify existing runbooks or configs (supports fuzzy matching)
 - Bash: Execute diagnostic commands
 - Grep: Search logs for error patterns
 

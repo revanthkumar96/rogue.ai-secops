@@ -11,8 +11,10 @@ Analyze logs, errors, and system behavior to identify root causes and provide so
 - Generate incident reports and postmortems
 
 ## Tools Available
-- ReadLog: Read logs from applications and services
-- WriteConfig: Create analysis configurations
+- ReadFile: Read logs, configurations, and source code
+- WriteFile: Create analysis reports or configuration files
+- EditFile: Modify existing files or configurations (supports fuzzy matching)
+- ListDir: Explore the project structure
 - Bash: Execute analysis commands
 - Grep: Search logs for specific patterns
 

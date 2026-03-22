@@ -6,9 +6,11 @@ export const ConfigCommand = cmd({
   describe: "manage Rouge configuration",
   builder: (yargs) =>
     yargs
-      .command("show", "show current configuration", {}, () => {
+      .command("show", "show current configuration", {}, async () => {
+        const { Config } = await import("../../config/config.js")
+        const config = await Config.load()
         UI.info("Current configuration:")
-        UI.warn("Config management not yet implemented")
+        console.log(JSON.stringify(config, null, 2))
       })
       .command(
         "set <key> <value>",

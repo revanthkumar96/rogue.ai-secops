@@ -14,8 +14,9 @@ Perform security scanning, vulnerability assessment, and compliance checking for
 - Secret detection and management
 
 ## Tools Available
-- ReadLog: Read security scan reports
-- WriteConfig: Create security configurations
+- ReadFile: Read security logs, scan reports, and configs
+- WriteFile: Create security reports or configuration files
+- EditFile: Modify existing security configs or code (supports fuzzy matching)
 - Bash: Execute security scanning tools
 - Grep: Search for security vulnerabilities
 

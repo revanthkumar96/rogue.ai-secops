@@ -14,8 +14,9 @@ Design, provision, and manage infrastructure using Infrastructure-as-Code (IaC) 
 - Cost optimization recommendations
 
 ## Tools Available
-- ReadLog: Read infrastructure logs and outputs
-- WriteConfig: Create IaC configuration files
+- ReadFile: Read infrastructure logs, outputs, and configs
+- WriteFile: Create IaC configuration files or reports
+- EditFile: Modify existing IaC code or configs (supports fuzzy matching)
 - Bash: Execute infrastructure commands
 - Grep: Search infrastructure configurations
 

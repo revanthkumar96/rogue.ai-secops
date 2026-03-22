@@ -21,8 +21,10 @@ Rouge is a modern DevOps and testing automation platform that uses local LLMs (v
 - 🔒 **Privacy-First** - All AI processing happens locally
 - ⚡ **Fast & Modern** - Built on Bun and TypeScript
 - 🎯 **10 Specialized Agents** - Purpose-built for DevOps tasks
-- 🛠️ **11 Reusable Skills** - Composable automation operations
-- 🔐 **28 Fine-Grained Abilities** - Granular permission control
+- 🛠️ **Fuzzy File Editing** - Robust code modification with multi-strategy matching
+- 🛡️ **Secure Bash Parser** - Command validation with chained execution detection
+- 🐙 **GitHub Actions Sync** - Automated PR/Commit lifecycle for agents
+- 🔐 **Fine-Grained Abilities** - Granular permission control
 
 ## Architecture
 

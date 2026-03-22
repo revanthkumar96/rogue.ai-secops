@@ -7,6 +7,7 @@ import { lazy } from "../util/lazy.js"
 import fs from "fs/promises"
 import path from "path"
 import { fileURLToPath } from "url"
+import { ToolRegistry } from "../tool/registry.js"
 
 /**
  * Agent system for DevOps automation
@@ -64,7 +65,7 @@ interface AgentCapability {
   description: string
   prompt: string
   tools: string[]
-  permissions: string[]
+  permissions: any[]
 }
 
 export namespace Agent {
@@ -75,7 +76,7 @@ export namespace Agent {
     const promptPath = path.join(
       __dirname,
       "prompts",
-      `${type}-agent.txt`
+      `${type}-agent.md`
     )
 
     try {
@@ -98,62 +99,93 @@ export namespace Agent {
       test: {
         name: "test",
         description: "Test generation and execution",
-        tools: ["ReadLog", "WriteConfig", "Bash", "Grep"],
-        permissions: ["read", "write", "execute"],
+        tools: ["ReadFile", "ListDir", "Bash", "Grep"],
+        permissions: [
+          { tool: "Bash", action: "allow", pattern: "bun test|npm test" },
+          { tool: "ReadFile", action: "allow" },
+          { tool: "ListDir", action: "allow" },
+          { tool: "Grep", action: "allow" }
+        ],
       },
       deploy: {
         name: "deploy",
         description: "Deployment automation",
-        tools: ["ReadLog", "WriteConfig", "Bash", "Grep"],
-        permissions: ["read", "write", "execute", "deploy"],
+        tools: ["ReadFile", "ListDir", "Bash", "Grep"],
+        permissions: [
+          { tool: "Bash", action: "ask", pattern: "nomad|kubectl|ssh" },
+          { tool: "ReadFile", action: "allow" },
+          { tool: "ListDir", action: "allow" }
+        ],
       },
       monitor: {
         name: "monitor",
         description: "System monitoring and alerting",
-        tools: ["ReadLog", "WriteConfig", "Bash", "Grep"],
-        permissions: ["read", "execute"],
+        tools: ["ReadFile", "Bash", "Grep"],
+        permissions: [
+          { tool: "Bash", action: "allow", pattern: "ps|top|df|du" },
+          { tool: "ReadFile", action: "allow" }
+        ],
       },
       analyze: {
         name: "analyze",
         description: "Log and error analysis",
-        tools: ["ReadLog", "Bash", "Grep"],
-        permissions: ["read"],
+        tools: ["ReadFile", "Grep"],
+        permissions: [
+          { tool: "ReadFile", action: "allow" },
+          { tool: "Grep", action: "allow" }
+        ],
       },
       "ci-cd": {
         name: "ci-cd",
         description: "CI/CD pipeline automation",
-        tools: ["ReadLog", "WriteConfig", "Bash", "Grep"],
-        permissions: ["read", "write", "execute"],
+        tools: ["ReadFile", "ListDir", "Bash", "Grep"],
+        permissions: [
+          { tool: "*", action: "allow" }
+        ],
       },
       security: {
         name: "security",
         description: "Security scanning and compliance",
-        tools: ["ReadLog", "WriteConfig", "Bash", "Grep"],
-        permissions: ["read", "execute"],
+        tools: ["ReadFile", "ListDir", "Bash", "Grep"],
+        permissions: [
+          { tool: "Bash", action: "allow", pattern: "snyk|trivy|audit" },
+          { tool: "ReadFile", action: "allow" }
+        ],
       },
       performance: {
         name: "performance",
         description: "Performance and load testing",
-        tools: ["ReadLog", "WriteConfig", "Bash", "Grep"],
-        permissions: ["read", "execute"],
+        tools: ["ReadFile", "Bash"],
+        permissions: [
+          { tool: "Bash", action: "allow", pattern: "k6|ab|wrk" },
+          { tool: "ReadFile", action: "allow" }
+        ],
       },
       infrastructure: {
         name: "infrastructure",
         description: "Infrastructure-as-Code management",
-        tools: ["ReadLog", "WriteConfig", "Bash", "Grep"],
-        permissions: ["read", "write", "execute"],
+        tools: ["ReadFile", "ListDir", "Bash"],
+        permissions: [
+          { tool: "Bash", action: "ask", pattern: "terraform|pulse|pulumi" },
+          { tool: "ReadFile", action: "allow" }
+        ],
       },
       incident: {
         name: "incident",
         description: "Incident response and troubleshooting",
-        tools: ["ReadLog", "WriteConfig", "Bash", "Grep"],
-        permissions: ["read", "execute"],
+        tools: ["ReadFile", "Bash", "Grep"],
+        permissions: [
+          { tool: "*", action: "allow" }
+        ],
       },
       database: {
         name: "database",
         description: "Database operations and optimization",
-        tools: ["ReadLog", "WriteConfig", "Bash", "Grep"],
-        permissions: ["read", "write", "execute"],
+        tools: ["ReadFile", "Bash"],
+        permissions: [
+          { tool: "Bash", action: "ask", pattern: "psql|mysql|mongo" },
+          { tool: "ReadFile", action: "allow" }
+        ],
       },
     }
 
@@ -199,9 +231,15 @@ export namespace Agent {
 
       // Build messages
       const messages: Message[] = [
-        Provider.system(capability.prompt),
+        Provider.system(`${capability.prompt}\n\nProject Environment:\nYou are working in a NodeJS/Bun monorepo. Use tools to explore and act.\nAvailable Tools: ${ToolRegistry.listTools().join(", ")}\n\nIMPORTANT: To call a tool, use the following format:\nTool: ToolName\nInput: {"arg1": "val1"}\n\nYou can chain multiple thoughts and tool calls. Wait for Observation after each call.`),
         Provider.user(request.task),
       ]
+
+      // Add project context (simple file list)
+      try {
+        const files = await fs.readdir(".", { recursive: true }).then(f => f.slice(0, 50).join("\n"))
+        messages.push(Provider.user(`Current Project Structure (Partial):\n${files}`))
+      } catch (e) {}
 
       // Add context if provided
       if (request.context) {
@@ -211,20 +249,45 @@ export namespace Agent {
         )
       }
 
-      // Execute request
-      const response = await provider.chat({
-        messages,
-        stream: false,
-      })
+      let iteration = 0
+      let finalOutput = ""
+      
+      while (iteration < 5) { // Safety limit
+        const response = await provider.chat({
+          messages,
+          stream: false,
+        })
 
-      log.info(`Agent ${request.type} completed successfully`)
+        const content = response.content
+        finalOutput += content + "\n"
+        messages.push(Provider.assistant(content))
+
+        // Basic tool parser
+        const toolMatch = content.match(/Tool: (\w+)\nInput: (\{.*\})/m)
+        if (toolMatch) {
+          const toolName = toolMatch[1]
+          const toolInput = JSON.parse(toolMatch[2])
+          
+          log.info(`LLM requested tool: ${toolName}`)
+          const observation = await ToolRegistry.call(toolName, toolInput, capability.permissions)
+          
+          messages.push(Provider.user(`Observation from ${toolName}:\n${JSON.stringify(observation, null, 2)}`))
+          finalOutput += `\nObservation from ${toolName}: ${JSON.stringify(observation, null, 2)}\n`
+          iteration++
+        } else {
+          break // No more tool calls
+        }
+      }
+
+      log.info(`Agent ${request.type} completed successfully after ${iteration} tool calls`)
 
       return {
         type: request.type,
-        output: response.content,
+        output: finalOutput,
         success: true,
         metadata: {
-          model: response.model,
+          model: (await provider.chat({ messages: [], stream: false })).model, // Get model name
+          iterations: iteration
         },
       }
     } catch (error: any) {

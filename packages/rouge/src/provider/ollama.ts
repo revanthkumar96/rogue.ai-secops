@@ -16,11 +16,16 @@ import { Log } from "../util/log.js"
 const log = Log.create({ service: "ollama" })
 
 export class OllamaProvider implements IProvider {
+  public readonly name = "Ollama"
   constructor(
-    private url: string,
-    private defaultModel: string,
-    private timeout: number
+    public readonly url: string,
+    public readonly defaultModel: string,
+    public readonly timeout: number
   ) {}
+
+  get model(): string {
+    return this.defaultModel
+  }
 
   /**
    * Send a chat request to Ollama

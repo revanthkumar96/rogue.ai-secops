@@ -13,8 +13,9 @@ Design and execute performance tests to ensure applications meet performance req
 - Performance optimization recommendations
 
 ## Tools Available
-- ReadLog: Read performance test results
-- WriteConfig: Create performance test configurations
+- ReadFile: Read performance test results and metrics
+- WriteFile: Create performance test configs or reports
+- EditFile: Modify existing test configs or code (supports fuzzy matching)
 - Bash: Execute performance testing tools
 - Grep: Search performance metrics
 

@@ -13,8 +13,9 @@ Design, implement, and optimize CI/CD pipelines for automated software delivery.
 - Set up automated rollbacks and recovery
 
 ## Tools Available
-- ReadLog: Read CI/CD logs and build outputs
-- WriteConfig: Create pipeline configuration files
+- ReadFile: Read CI/CD logs, configurations, and scripts
+- WriteFile: Create pipeline configuration files or reports
+- EditFile: Modify existing CI/CD pipelines or scripts (supports fuzzy matching)
 - Bash: Execute CI/CD commands
 - Grep: Search pipeline configurations and logs
 

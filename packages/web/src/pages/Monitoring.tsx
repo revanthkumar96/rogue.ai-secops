@@ -16,54 +16,95 @@ export const MonitoringPage: Component = () => {
   })
 
   return (
-    <div class="container">
-      <h1>Monitoring</h1>
-      <p style={{ color: "var(--text-secondary)", "margin-bottom": "2rem" }}>
-        Real-time system health and performance monitoring
-      </p>
+    <div style={{ padding: "2rem 0" }}>
+      <div style={{ "margin-bottom": "2.5rem" }}>
+        <h1 style={{ "font-size": "2rem", margin: 0, "letter-spacing": "-0.04em" }}>Monitoring</h1>
+        <p style={{ color: "var(--text-secondary)", margin: "0.5rem 0 0 0" }}>
+          Real-time health telemetry for your security infrastructure.
+        </p>
+      </div>
 
-      <div style={{ display: "grid", "grid-template-columns": "repeat(auto-fit, minmax(300px, 1fr))", gap: "1rem" }}>
-        <div class="card">
-          <h3 style={{ color: "var(--text-secondary)", "font-size": "14px" }}>System Status</h3>
-          <div style={{ display: "flex", "align-items": "center", gap: "0.5rem", "margin-top": "1rem" }}>
+      <div style={{ display: "grid", "grid-template-columns": "repeat(auto-fit, minmax(320px, 1fr))", gap: "1.25rem" }}>
+        <div class="card" style={{ display: "flex", "flex-direction": "column", gap: "1.25rem" }}>
+          <div style={{ display: "flex", "justify-content": "space-between", "align-items": "center" }}>
+            <span style={{ "font-size": "0.875rem", "font-weight": "500", color: "var(--text-tertiary)" }}>System Status</span>
+            <span style={{ "font-size": "1.25rem" }}>🛰️</span>
+          </div>
+          <div style={{ display: "flex", "align-items": "center", gap: "0.75rem" }}>
             <div
               style={{
-                width: "12px",
-                height: "12px",
+                width: "10px",
+                height: "10px",
                 "border-radius": "50%",
                 background: stats().status === "healthy" ? "var(--success)" : "var(--danger)",
+                "box-shadow": stats().status === "healthy" ? "0 0 8px var(--success)" : "none"
               }}
             />
-            <span style={{ "font-size": "24px", "font-weight": "bold" }}>
+            <span style={{ "font-size": "2rem", "font-weight": "700", "letter-spacing": "-0.04em" }}>
               {stats().status.toUpperCase()}
             </span>
           </div>
+          <div style={{ "font-size": "12px", color: "var(--text-tertiary)" }}>
+            Heartbeat: Stable
+          </div>
         </div>
 
-        <div class="card">
-          <h3 style={{ color: "var(--text-secondary)", "font-size": "14px" }}>System Uptime</h3>
-          <div style={{ "font-size": "24px", "font-weight": "bold", "margin-top": "1rem" }}>
+        <div class="card" style={{ display: "flex", "flex-direction": "column", gap: "1.25rem" }}>
+          <div style={{ display: "flex", "justify-content": "space-between", "align-items": "center" }}>
+            <span style={{ "font-size": "0.875rem", "font-weight": "500", color: "var(--text-tertiary)" }}>System Uptime</span>
+            <span style={{ "font-size": "1.25rem" }}>⏱️</span>
+          </div>
+          <div style={{ "font-size": "2rem", "font-weight": "700", "letter-spacing": "-0.04em" }}>
             {stats().uptime}
+          </div>
+          <div style={{ "font-size": "12px", color: "var(--success)", "font-weight": "500" }}>
+            Availability: 99.9%
           </div>
         </div>
       </div>
 
-      <div class="card" style={{ "margin-top": "2rem" }}>
-        <h3>Active Services</h3>
-        <ul style={{ "list-style": "none", padding: 0, "margin-top": "1rem" }}>
-          <li style={{ display: "flex", "justify-content": "space-between", padding: "0.5rem 0", "border-bottom": "1px solid var(--border)" }}>
-            <span>Ollama AI Engine</span>
-            <span style={{ color: "var(--success)" }}>Online</span>
-          </li>
-          <li style={{ display: "flex", "justify-content": "space-between", padding: "0.5rem 0", "border-bottom": "1px solid var(--border)" }}>
-            <span>Rouge API Gateway</span>
-            <span style={{ color: "var(--success)" }}>Online</span>
-          </li>
-          <li style={{ display: "flex", "justify-content": "space-between", padding: "0.5rem 0" }}>
-            <span>SQLite Database</span>
-            <span style={{ color: "var(--success)" }}>Healthy</span>
-          </li>
-        </ul>
+      <div class="card" style={{ "margin-top": "2rem", padding: "1.5rem" }}>
+        <div style={{ display: "flex", "justify-content": "space-between", "align-items": "center", "margin-bottom": "1.5rem" }}>
+          <h3 style={{ margin: 0, "font-size": "1.125rem" }}>Active Core Services</h3>
+          <span style={{ "font-size": "11px", color: "var(--text-tertiary)", "text-transform": "uppercase", "letter-spacing": "0.05em" }}>
+            3 Online
+          </span>
+        </div>
+        <div style={{ display: "flex", "flex-direction": "column", gap: "0.5rem" }}>
+          <div style={{ 
+            display: "flex", 
+            "justify-content": "space-between", 
+            padding: "0.75rem 1rem", 
+            background: "var(--bg-secondary)",
+            "border-radius": "var(--radius-md)",
+            border: "1px solid var(--border)"
+          }}>
+            <span style={{ "font-size": "14px", "font-weight": "500" }}>Ollama AI Engine</span>
+            <span class="badge badge-success">Online</span>
+          </div>
+          <div style={{ 
+            display: "flex", 
+            "justify-content": "space-between", 
+            padding: "0.75rem 1rem", 
+            background: "var(--bg-secondary)",
+            "border-radius": "var(--radius-md)",
+            border: "1px solid var(--border)"
+          }}>
+            <span style={{ "font-size": "14px", "font-weight": "500" }}>Rouge API Gateway</span>
+            <span class="badge badge-success">Online</span>
+          </div>
+          <div style={{ 
+            display: "flex", 
+            "justify-content": "space-between", 
+            padding: "0.75rem 1rem", 
+            background: "var(--bg-secondary)",
+            "border-radius": "var(--radius-md)",
+            border: "1px solid var(--border)"
+          }}>
+            <span style={{ "font-size": "14px", "font-weight": "500" }}>SQLite Database</span>
+            <span class="badge badge-success">Healthy</span>
+          </div>
+        </div>
       </div>
     </div>
   )

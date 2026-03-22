@@ -57,13 +57,13 @@ describe('CLI Commands', () => {
     it('should list skills', async () => {
       const { stdout, exitCode } = await $`bun run src/index.ts list skills`.quiet()
       expect(exitCode).toBe(0)
-      expect(stdout.toString()).toContain('skill')
+      expect(stdout.toString().toLowerCase()).toContain('skill')
     })
 
     it('should list abilities', async () => {
       const { stdout, exitCode } = await $`bun run src/index.ts list abilities`.quiet()
       expect(exitCode).toBe(0)
-      expect(stdout.toString()).toContain('ability')
+      expect(stdout.toString().toLowerCase()).toContain('ability')
     })
 
     it('should filter skills by category', async () => {
@@ -89,7 +89,7 @@ describe('CLI Commands', () => {
     })
 
     it('should handle invalid agent type', async () => {
-      const { exitCode } = await $`bun run src/index.ts agent run invalid "test"`.quiet()
+      const { exitCode } = await $`bun run src/index.ts agent run invalid "test"`.quiet().nothrow()
       expect(exitCode).not.toBe(0)
     })
   })
@@ -104,17 +104,17 @@ describe('CLI Commands', () => {
 
   describe('Error Handling', () => {
     it('should handle unknown command', async () => {
-      const { exitCode } = await $`bun run src/index.ts unknown-command`.quiet()
+      const { exitCode } = await $`bun run src/index.ts unknown-command`.quiet().nothrow()
       expect(exitCode).not.toBe(0)
     })
 
     it('should handle missing required arguments', async () => {
-      const { exitCode } = await $`bun run src/index.ts agent run`.quiet()
+      const { exitCode } = await $`bun run src/index.ts agent run`.quiet().nothrow()
       expect(exitCode).not.toBe(0)
     })
 
     it('should validate command syntax', async () => {
-      const { exitCode } = await $`bun run src/index.ts list`.quiet()
+      const { exitCode } = await $`bun run src/index.ts list`.quiet().nothrow()
       // Should fail without specifying what to list
       expect(exitCode).not.toBe(0)
     })

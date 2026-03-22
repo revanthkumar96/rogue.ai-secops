@@ -29,26 +29,33 @@ export const WorkflowsPage: Component = () => {
   }
 
   return (
-    <div class="container">
-      <div style={{ display: "flex", "justify-content": "space-between", "align-items": "center", "margin-bottom": "2rem" }}>
+    <div style={{ padding: "2rem 0" }}>
+      <div style={{ display: "flex", "justify-content": "space-between", "align-items": "flex-end", "margin-bottom": "2.5rem" }}>
         <div>
-          <h1 style={{ margin: 0 }}>Workflows</h1>
-          <p style={{ color: "var(--text-secondary)", margin: 0 }}>
-            Manage automation workflows
+          <h1 style={{ "font-size": "2rem", margin: 0, "letter-spacing": "-0.04em" }}>Workflows</h1>
+          <p style={{ color: "var(--text-secondary)", margin: "0.5rem 0 0 0" }}>
+            Automate complex multi-agent security operations.
           </p>
         </div>
-        <button>Create Workflow</button>
+        <button style={{ "font-size": "13px", padding: "0.5rem 1.25rem" }}>+ Create Workflow</button>
       </div>
 
       <Show when={loading()}>
-        <div class="card">Loading workflows...</div>
+        <div class="card" style={{ "text-align": "center", padding: "3rem" }}>
+          <div style={{ color: "var(--text-tertiary)" }}>Loading workflows...</div>
+        </div>
       </Show>
 
       <Show when={!loading() && workflows().length === 0}>
-        <div class="card">
-          <p style={{ color: "var(--text-secondary)", margin: 0 }}>
-            No workflows yet. Create your first workflow to get started.
+        <div class="card" style={{ "text-align": "center", padding: "3rem", border: "1px dashed var(--border-strong)" }}>
+          <div style={{ "font-size": "2rem", "margin-bottom": "1rem" }}>📋</div>
+          <h3 style={{ margin: 0 }}>No Workflows Found</h3>
+          <p style={{ color: "var(--text-tertiary)", margin: "0.5rem 0 1.5rem 0", "font-size": "14px" }}>
+            Create your first multi-agent workflow to automate your security pipeline.
           </p>
+          <button style={{ background: "var(--bg-tertiary)", color: "var(--text-primary)", border: "1px solid var(--border-strong)" }}>
+            Get Started
+          </button>
         </div>
       </Show>
 
@@ -56,25 +63,49 @@ export const WorkflowsPage: Component = () => {
         <div style={{ display: "grid", gap: "1rem" }}>
           <For each={workflows()}>
             {(workflow) => (
-              <div class="card">
-                <div style={{ display: "flex", "justify-content": "space-between", "align-items": "start" }}>
+              <div class="card" style={{ 
+                display: "flex", 
+                "justify-content": "space-between", 
+                "align-items": "center",
+                padding: "1.25rem 1.5rem"
+              }}>
+                <div style={{ display: "flex", "align-items": "center", gap: "1.25rem" }}>
+                  <div style={{ 
+                    width: "48px", 
+                    height: "48px", 
+                    "border-radius": "var(--radius-lg)", 
+                    background: "var(--accent-soft)",
+                    display: "flex", "align-items": "center", "justify-content": "center", "font-size": "1.5rem"
+                  }}>
+                    📋
+                  </div>
                   <div>
-                    <h3 style={{ margin: 0, "margin-bottom": "0.25rem" }}>
+                    <h3 style={{ margin: 0, "font-size": "1.125rem" }}>
                       {workflow.name}
                     </h3>
-                    <p style={{ color: "var(--text-secondary)", margin: 0, "margin-bottom": "0.5rem" }}>
-                      {workflow.description || "No description"}
+                    <p style={{ color: "var(--text-tertiary)", "font-size": "13px", "margin": "0.25rem 0" }}>
+                      {workflow.description || "Automated multi-step procedure"}
                     </p>
-                    <p style={{ color: "var(--text-secondary)", "font-size": "12px", margin: 0 }}>
-                      {workflow.steps.length} steps
-                    </p>
+                    <div style={{ display: "flex", gap: "1rem", "margin-top": "0.5rem" }}>
+                      <span style={{ "font-size": "11px", color: "var(--text-tertiary)", "text-transform": "uppercase", "letter-spacing": "0.05em" }}>
+                        {workflow.steps.length} Actions
+                      </span>
+                    </div>
                   </div>
-                  <div style={{ display: "flex", "align-items": "center", gap: "1rem" }}>
-                    <span class={getStatusBadge(workflow.status)}>
-                      {workflow.status}
-                    </span>
-                    <button>Run</button>
-                  </div>
+                </div>
+                <div style={{ display: "flex", "align-items": "center", gap: "1.5rem" }}>
+                  <span class={getStatusBadge(workflow.status)} style={{ "text-transform": "capitalize" }}>
+                    {workflow.status}
+                  </span>
+                  <button style={{ 
+                    background: "var(--bg-tertiary)", 
+                    color: "var(--text-primary)", 
+                    border: "1px solid var(--border-strong)",
+                    "font-size": "13px",
+                    padding: "0.4rem 1rem"
+                  }}>
+                    Run Workflow
+                  </button>
                 </div>
               </div>
             )}

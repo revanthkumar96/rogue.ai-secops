@@ -14,8 +14,9 @@ Manage databases, optimize performance, and execute safe schema migrations.
 - Performance troubleshooting
 
 ## Tools Available
-- ReadLog: Read database logs and slow queries
-- WriteConfig: Create migration scripts
+- ReadFile: Read database logs, slow queries, and schemas
+- WriteFile: Create migration scripts or reports
+- EditFile: Modify existing migration scripts or code (supports fuzzy matching)
 - Bash: Execute database commands
 - Grep: Search query logs and schemas
 

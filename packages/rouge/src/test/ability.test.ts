@@ -4,7 +4,7 @@ import { Ability } from "../ability"
 describe("Ability System", () => {
   test("should list all abilities", () => {
     const abilities = Ability.list()
-    expect(abilities).toHaveLength(28)
+    expect(abilities).toHaveLength(30)
   })
 
   test("should get ability by ID", () => {

@@ -89,12 +89,23 @@ export const App: ParentComponent = (props) => {
         when={setupComplete()}
         fallback={<Setup onComplete={handleSetupComplete} />}
       >
-        <div style={{ display: "flex", "flex-direction": "column", height: "100vh" }}>
+        <div style={{ 
+          display: "flex", 
+          "flex-direction": "column", 
+          height: "100vh",
+          background: "radial-gradient(circle at top right, var(--bg-secondary), var(--bg-primary))"
+        }}>
           <Header connected={connected()} />
           <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
             <Sidebar />
-            <main style={{ flex: 1, overflow: "auto" }}>
-              {props.children}
+            <main style={{ 
+              flex: 1, 
+              overflow: "auto",
+              padding: "0" 
+            }}>
+              <div class="container">
+                {props.children}
+              </div>
             </main>
           </div>
         </div>
