@@ -1,0 +1,51 @@
+name: ROUGE Agent
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: 'Prompt for the agent'
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+
+jobs:
+  rouge:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '/rouge')) ||
+      (github.event_name == 'pull_request') ||
+      (github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install Dependencies
+        run: bun install
+
+      - name: Run ROUGE Agent
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OLLAMA_URL: ${{ secrets.OLLAMA_URL }} # For remote Ollama
+        run: |
+          # The agent script would be here, handling the logic of:
+          # 1. Parsing the event
+          # 2. Running the agent loop
+          # 3. Generating a summary
+          # 4. Git add/commit/push
+          # 5. Creating/Updating PR
+          bun run packages/rouge/src/index.ts --github-event "$GITHUB_EVENT_PATH"
