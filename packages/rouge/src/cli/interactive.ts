@@ -151,7 +151,7 @@ export namespace Interactive {
     spinner.start()
 
     try {
-      const provider = await Ollama.Default
+      const provider = await Ollama.Default()
       const models = await provider.listModels()
       spinner.succeed(`Found ${models.length} models`)
 

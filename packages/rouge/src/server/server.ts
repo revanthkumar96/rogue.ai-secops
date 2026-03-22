@@ -4,6 +4,7 @@ import { logger } from "hono/logger"
 import { Log } from "../util/log"
 import { lazy } from "../util/lazy"
 import { registerRoutes } from "./routes/index.js"
+import { Config } from "../config/config.js"
 
 const log = Log.create({ service: "server" })
 
@@ -12,43 +13,50 @@ export namespace Server {
 
   export function createApp(opts: { cors?: string[] }): Hono {
     const app = new Hono()
+    const api = new Hono()
 
-    // Setup middleware and base routes
-    app
-      .onError((err, c) => {
-        log.error("request failed", { error: err.message })
-        return c.json(
-          {
-            error: err.message,
-            stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
-          },
-          500,
-        )
+    // Setup logging and error handling
+    app.onError((err, c) => {
+      console.error(`[Server Error] ${err.message}`)
+      return c.json({ error: err.message }, 500)
+    })
+
+    // Middleware on the API sub-router
+    api.use("*", logger())
+    api.use(
+      "*",
+      cors({
+        origin: (origin) => origin,
+        credentials: true,
       })
-      .use("*", logger())
-      .use(
-        "*",
-        cors({
-          origin: opts.cors || ["http://localhost:*"],
-          credentials: true,
-        }),
-      )
-      .get("/", (c) =>
-        c.json({
-          name: "Rouge API",
-          version: "0.1.0",
-          description: "DevOps & Testing Automation Platform",
-        }),
-      )
-      .get("/health", (c) =>
-        c.json({
-          status: "ok",
-          timestamp: Date.now(),
-        }),
-      )
+    )
 
-    // Register API routes
-    registerRoutes(app)
+    // API Routes
+    api.get("/", (c) =>
+      c.json({
+        name: "Rouge API",
+        version: "0.1.0",
+        status: "ok",
+      })
+    )
+
+    api.get("/health", (c) =>
+      c.json({
+        status: "ok",
+        timestamp: Date.now(),
+      })
+    )
+
+    api.get("/config", async (c) => {
+      const config = await Config.load()
+      return c.json(config)
+    })
+
+    // Register other routes on the api sub-router
+    registerRoutes(api)
+
+    // Mount the api sub-router on the main app
+    app.route("/api", api)
 
     return app
   }

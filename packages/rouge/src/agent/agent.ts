@@ -189,7 +189,7 @@ export namespace Agent {
 
     try {
       const capability = await getCapabilities(request.type)
-      const provider = await Ollama.Default
+      const provider = await Ollama.Default()
 
       // Check if provider is available
       const available = await provider.isAvailable()
@@ -251,7 +251,7 @@ export namespace Agent {
 
     try {
       const capability = await getCapabilities(request.type)
-      const provider = await Ollama.Default
+      const provider = await Ollama.Default()
 
       // Check if provider is available
       const available = await provider.isAvailable()
@@ -293,7 +293,7 @@ export namespace Agent {
    */
   export async function testConnection(): Promise<boolean> {
     try {
-      const provider = await Ollama.Default
+      const provider = await Ollama.Default()
       return await provider.isAvailable()
     } catch (error) {
       log.error(`Connection test failed: ${error}`)

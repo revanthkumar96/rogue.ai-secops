@@ -43,31 +43,19 @@ export const Sidebar: Component = () => {
             </A>
           </li>
           <li style={{ "margin-bottom": "0.5rem" }}>
-            <a
-              href="#"
-              style={linkStyle(false)}
-              onClick={(e) => e.preventDefault()}
-            >
+            <A href="/tests" style={linkStyle(isActive("/tests"))}>
               🧪 Tests
-            </a>
+            </A>
           </li>
           <li style={{ "margin-bottom": "0.5rem" }}>
-            <a
-              href="#"
-              style={linkStyle(false)}
-              onClick={(e) => e.preventDefault()}
-            >
+            <A href="/deployments" style={linkStyle(isActive("/deployments"))}>
               🚀 Deployments
-            </a>
+            </A>
           </li>
           <li style={{ "margin-bottom": "0.5rem" }}>
-            <a
-              href="#"
-              style={linkStyle(false)}
-              onClick={(e) => e.preventDefault()}
-            >
+            <A href="/monitoring" style={linkStyle(isActive("/monitoring"))}>
               📈 Monitoring
-            </a>
+            </A>
           </li>
           <li style={{ "margin-bottom": "0.5rem" }}>
             <A href="/settings" style={linkStyle(isActive("/settings"))}>

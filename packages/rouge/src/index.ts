@@ -14,7 +14,6 @@ import { Log } from "./util/log"
 import { Installation } from "./installation"
 import { UI } from "./cli/ui"
 import { Global } from "./global"
-import { Database } from "./storage/db"
 import path from "path"
 import { Filesystem } from "./util/filesystem"
 

@@ -14,17 +14,21 @@ export const Setup: Component<SetupProps> = (props) => {
   const [configuring, setConfiguring] = createSignal(false)
 
   const checkConnection = async () => {
+    console.log("[Setup] Check Connection clicked")
     setChecking(true)
     try {
+      console.log("[Setup] Testing agent connection...")
       const result = await api.testAgentConnection()
+      console.log("[Setup] Connection result:", result)
       setConnected(result.connected)
 
       if (result.connected) {
-        // Try to fetch models (this endpoint doesn't exist yet, but we'll show default)
+        console.log("[Setup] Success! Moving to Step 2")
         setModels(["llama3.2:3b", "llama3.2:1b", "llama3:8b", "llama3:70b"])
         setStep(2)
       }
     } catch (error) {
+      console.error("[Setup] Connection check failed:", error)
       setConnected(false)
     } finally {
       setChecking(false)

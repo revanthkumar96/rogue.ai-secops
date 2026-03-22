@@ -1,4 +1,4 @@
-import { Component, createSignal, For, Show } from "solid-js"
+import { Component, createSignal, For, Show, onMount } from "solid-js"
 import { api } from "../lib/api"
 
 interface AgentCardProps {
@@ -86,7 +86,9 @@ export const AgentsPage: Component = () => {
     }
   }
 
-  loadAgents()
+  onMount(() => {
+    loadAgents()
+  })
 
   const getAgentDescription = (name: string): string => {
     const descriptions: Record<string, string> = {

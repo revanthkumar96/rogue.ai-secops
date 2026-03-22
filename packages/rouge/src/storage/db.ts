@@ -1,5 +1,5 @@
-import Database from "better-sqlite3"
-import { drizzle } from "drizzle-orm/better-sqlite3"
+import { Database } from "bun:sqlite"
+import { drizzle } from "drizzle-orm/bun-sqlite"
 import path from "path"
 import { Global } from "../global"
 import { Log } from "../util/log"
@@ -19,12 +19,12 @@ export namespace DB {
     const sqlite = new Database(Path)
 
     // SQLite optimizations
-    sqlite.pragma("journal_mode = WAL")
-    sqlite.pragma("synchronous = NORMAL")
-    sqlite.pragma("busy_timeout = 5000")
-    sqlite.pragma("cache_size = -64000")
-    sqlite.pragma("foreign_keys = ON")
-    sqlite.pragma("wal_checkpoint(PASSIVE)")
+    sqlite.exec("PRAGMA journal_mode = WAL")
+    sqlite.exec("PRAGMA synchronous = NORMAL")
+    sqlite.exec("PRAGMA busy_timeout = 5000")
+    sqlite.exec("PRAGMA cache_size = -64000")
+    sqlite.exec("PRAGMA foreign_keys = ON")
+    sqlite.exec("PRAGMA wal_checkpoint(PASSIVE)")
 
     _client = drizzle(sqlite)
 
@@ -39,8 +39,9 @@ export namespace DB {
     }
   }
 
-  export function transaction<T>(fn: (tx: ReturnType<typeof client>) => T): T {
+  export function transaction<T>(fn: (tx: Transaction) => T): T {
     const db = client()
+    // @ts-ignore - Drizzle transaction typing can be tricky with specific drivers
     return db.transaction((tx) => fn(tx))
   }
 

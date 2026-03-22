@@ -14,6 +14,7 @@ export const execution_log = sqliteTable("execution_log", {
   output: text("output"),
   success: integer("success", { mode: "boolean" }).notNull(),
   metadata: text("metadata"), // JSON
+  model_used: text("model_used"),
   started_at: integer("started_at").notNull(),
   completed_at: integer("completed_at"),
 })

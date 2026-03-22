@@ -15,7 +15,7 @@ export const ServeCommand = cmd({
       .option("host", {
         describe: "host to bind to",
         type: "string",
-        default: "localhost",
+        default: "127.0.0.1",
       }),
   handler: async (args) => {
     const server = Server.listen({
