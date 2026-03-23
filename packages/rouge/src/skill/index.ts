@@ -12,33 +12,33 @@ export const SkillDefinition = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
-  category: z.enum([
-    "testing",
-    "deployment",
-    "monitoring",
-    "security",
-    "infrastructure",
-    "database",
-    "analysis",
-  ]),
+  category: z.string(),
   inputs: z.array(z.object({
     name: z.string(),
     type: z.string(),
     description: z.string(),
     required: z.boolean(),
-  })),
+  })).optional(),
   outputs: z.array(z.object({
     name: z.string(),
     type: z.string(),
     description: z.string(),
-  })),
-  examples: z.array(z.string()),
+  })).optional(),
+  examples: z.array(z.string()).optional(),
+  content: z.string().optional(),
 })
 export type SkillDefinition = z.infer<typeof SkillDefinition>
 
+import fs from "fs"
+import path from "path"
+import { fileURLToPath } from "url"
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
 export namespace Skill {
   /**
-   * All available skills
+   * All available skills (including those loaded from definitions)
    */
   export const definitions: Record<string, SkillDefinition> = {
     // Testing Skills
@@ -453,6 +453,57 @@ export namespace Skill {
   }
 
   /**
+   * Load skills from the definitions directory
+   */
+  export function loadDefinitions(): void {
+    const definitionsDir = path.join(__dirname, "definitions")
+    if (!fs.existsSync(definitionsDir)) return
+
+    const files = fs.readdirSync(definitionsDir)
+    for (const file of files) {
+      if (!file.endsWith(".md")) continue
+
+      try {
+        const filePath = path.join(definitionsDir, file)
+        const content = fs.readFileSync(filePath, "utf-8")
+        
+        // Basic parser for frontmatter
+        const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/)
+        if (match) {
+          const yaml = match[1]
+          const body = match[2]
+          
+          const nameMatch = yaml.match(/name: (.*)/)
+          const descMatch = yaml.match(/description: (.*)/)
+          
+          if (nameMatch && descMatch) {
+            const id = path.basename(file, ".md")
+            definitions[id] = {
+              id,
+              name: nameMatch[1].trim(),
+              description: descMatch[1].trim(),
+              category: "general", // Default category for MD-based skills
+              content: body.trim(),
+            }
+          }
+        } else {
+            // No frontmatter, just use filename
+            const id = path.basename(file, ".md")
+            definitions[id] = {
+                id,
+                name: id.replace(/-/g, " "),
+                description: `Skill for ${id}`,
+                category: "general",
+                content: content.trim()
+            }
+        }
+      } catch (e) {
+        console.error(`Failed to load skill from ${file}:`, e)
+      }
+    }
+  }
+
+  /**
    * Get skill by ID
    */
   export function get(id: string): SkillDefinition | undefined {
@@ -484,4 +535,7 @@ export namespace Skill {
         s.description.toLowerCase().includes(lowerQuery)
     )
   }
+
+  // Initialize by loading definitions
+  loadDefinitions()
 }

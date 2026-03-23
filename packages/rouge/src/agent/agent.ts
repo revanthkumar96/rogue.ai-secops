@@ -78,7 +78,7 @@ export namespace Agent {
   async function loadPrompt(type: AgentType): Promise<string> {
     const promptPath = path.join(
       __dirname,
-      "prompts",
+      "persona",
       `${type}-agent.md`
     )
 
