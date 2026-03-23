@@ -4,11 +4,12 @@ import path from "path"
 import os from "os"
 
 const app = "rouge"
+const home = os.homedir()
 
-const data = path.join(xdgData!, app)
-const cache = path.join(xdgCache!, app)
-const config = path.join(xdgConfig!, app)
-const state = path.join(xdgState!, app)
+const data = path.join(xdgData || path.join(home, ".local", "share"), app)
+const cache = path.join(xdgCache || path.join(home, ".cache"), app)
+const config = path.join(xdgConfig || path.join(home, ".config"), app)
+const state = path.join(xdgState || path.join(home, ".local", "state"), app)
 
 export namespace Global {
   export const Path = {
