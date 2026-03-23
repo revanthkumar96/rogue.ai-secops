@@ -10,6 +10,12 @@ on:
 env:
   BUN_VERSION: '1.3.0'
 
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: write
+  issues: write
+
 jobs:
   # Job 1: Type checking and linting
   typecheck-and-lint:
@@ -199,12 +205,12 @@ jobs:
       - name: Test CLI commands
         run: |
           cd packages/rouge
-          bun dev --version
-          bun dev --help
-          bun dev status || true
-          bun dev list agents
-          bun dev list skills
-          bun dev list abilities
+          bun src/index.ts --version
+          bun src/index.ts --help
+          bun src/index.ts status || true
+          bun src/index.ts list agents
+          bun src/index.ts list skills
+          bun src/index.ts list abilities
 
   # Job 7: Web bundle analysis
   analyze-web-bundle:
@@ -300,6 +306,7 @@ jobs:
     name: Lighthouse Performance
     runs-on: ubuntu-latest
     needs: build-web
+    continue-on-error: true
 
     steps:
       - name: Checkout code

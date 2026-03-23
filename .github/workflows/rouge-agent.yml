@@ -48,4 +48,4 @@ jobs:
           # 3. Generating a summary
           # 4. Git add/commit/push
           # 5. Creating/Updating PR
-          bun packages/rouge/src/index.ts --github-event "$GITHUB_EVENT_PATH"
+          cd packages/rouge && bun src/index.ts --github-event "$GITHUB_EVENT_PATH"
