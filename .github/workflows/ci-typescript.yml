@@ -196,12 +196,6 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Download rouge build
-        uses: actions/download-artifact@v4
-        with:
-          name: rouge-dist
-          path: packages/rouge/dist
-
       - name: Test CLI commands
         run: |
           cd packages/rouge
@@ -326,8 +320,8 @@ jobs:
       - name: Start static server
         run: |
           cd packages/web/dist
-          npx http-server -p 8080 &
-          sleep 5
+          npx http-server -p 8080 -c-1 &
+          npx wait-on http://localhost:8080 -t 30000
 
       - name: Run Lighthouse
         uses: treosh/lighthouse-ci-action@v11
