@@ -1,4 +1,5 @@
 import { Hono } from "hono"
+import { stream } from "hono/streaming"
 import { zValidator } from "@hono/zod-validator"
 import { z } from "zod"
 import { Agent } from "../../agent/agent.js"
@@ -47,7 +48,7 @@ app.post(
 
     if (data.stream) {
       // Return streaming response
-      return c.stream(async (stream) => {
+      return stream(c, async (stream) => {
         for await (const chunk of Agent.executeStream(data)) {
           await stream.write(chunk)
         }

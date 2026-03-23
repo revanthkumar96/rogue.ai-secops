@@ -16,7 +16,7 @@
     "test:provider": "bun test src/test/provider.test.ts --timeout 30000",
     "test:tool": "bun test src/test/tool.test.ts",
     "test:ci": "bun test --coverage --timeout 60000",
-    "build": "echo 'Build not yet implemented'",
+    "build": "tsc",
     "dev": "bun run --watch ./src/index.ts"
   },
   "bin": {

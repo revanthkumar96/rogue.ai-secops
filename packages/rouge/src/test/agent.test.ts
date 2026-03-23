@@ -4,7 +4,7 @@ import { Agent } from "../agent/agent"
 describe("Agent System", () => {
   test("should list all agents", () => {
     const agents = Agent.listAgents()
-    expect(agents).toHaveLength(10)
+    expect(agents).toHaveLength(11)
     expect(agents).toContain("test")
     expect(agents).toContain("deploy")
     expect(agents).toContain("monitor")
@@ -15,6 +15,7 @@ describe("Agent System", () => {
     expect(agents).toContain("infrastructure")
     expect(agents).toContain("incident")
     expect(agents).toContain("database")
+    expect(agents).toContain("router")
   })
 
   test("should get agent capabilities", async () => {

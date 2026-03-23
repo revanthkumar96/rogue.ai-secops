@@ -483,6 +483,9 @@ export namespace Skill {
               name: nameMatch[1].trim(),
               description: descMatch[1].trim(),
               category: "general", // Default category for MD-based skills
+              inputs: [],
+              outputs: [],
+              examples: [],
               content: body.trim(),
             }
           }
@@ -494,6 +497,9 @@ export namespace Skill {
                 name: id.replace(/-/g, " "),
                 description: `Skill for ${id}`,
                 category: "general",
+                inputs: [],
+                outputs: [],
+                examples: [],
                 content: content.trim()
             }
         }
