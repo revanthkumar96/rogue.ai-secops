@@ -11,10 +11,13 @@
   },
   "dependencies": {
     "@solidjs/router": "^0.15.3",
+    "highlight.js": "^11.11.1",
+    "marked": "^17.0.5",
     "solid-js": "^1.9.3"
   },
   "devDependencies": {
     "@types/bun": "catalog:",
+    "@types/marked": "^6.0.0",
     "typescript": "catalog:",
     "vite": "^6.0.11",
     "vite-plugin-solid": "^2.10.2"

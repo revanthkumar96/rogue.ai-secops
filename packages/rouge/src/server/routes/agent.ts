@@ -53,21 +53,22 @@ app.post(
       task: z.string(),
       context: z.record(z.any()).optional(),
       stream: z.boolean().default(false),
+      sessionId: z.string().optional(),
     })
   ),
   async (c) => {
     const data = c.req.valid("json")
 
+    const sessionId = data.sessionId || c.req.header("x-session-id") || "web-default"
+
     if (data.stream) {
-      // Return streaming response
       return stream(c, async (stream) => {
-        for await (const chunk of Agent.executeStream(data)) {
+        for await (const chunk of Agent.executeStream({ ...data, sessionId })) {
           await stream.write(chunk)
         }
       })
     } else {
-      // Return complete response
-      const result = await Agent.execute(data)
+      const result = await Agent.execute({ ...data, sessionId })
       return c.json(result)
     }
   }
