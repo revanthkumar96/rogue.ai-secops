@@ -10,6 +10,7 @@ import path from "path"
 import { fileURLToPath } from "url"
 import { ToolRegistry } from "../tool/registry.js"
 import { DatabaseTool } from "../tool/database.js"
+import { Session } from "./session.js"
 
 /**
  * Agent system for DevOps automation
@@ -39,6 +40,7 @@ export const AgentRequest = z.object({
   task: z.string(),
   context: z.record(z.any()).optional(),
   stream: z.boolean().default(false),
+  sessionId: z.string().optional(),
 })
 export type AgentRequest = z.infer<typeof AgentRequest>
 
@@ -103,22 +105,27 @@ export namespace Agent {
       test: {
         name: "test",
         description: "Test generation and execution",
-        tools: ["ReadFile", "ListDir", "Bash", "Grep"],
+        tools: ["ReadFile", "ListDir", "Bash", "Grep", "WriteFile", "EditFile"],
         permissions: [
-          { tool: "Bash", action: "allow", pattern: "bun test|npm test" },
+          { tool: "Bash", action: "ask" },
           { tool: "ReadFile", action: "allow" },
           { tool: "ListDir", action: "allow" },
-          { tool: "Grep", action: "allow" }
+          { tool: "Grep", action: "allow" },
+          { tool: "WriteFile", action: "ask" },
+          { tool: "EditFile", action: "ask" },
         ],
       },
       deploy: {
         name: "deploy",
         description: "Deployment automation",
-        tools: ["ReadFile", "ListDir", "Bash", "Grep"],
+        tools: ["ReadFile", "ListDir", "Bash", "Grep", "WriteFile", "EditFile"],
         permissions: [
-          { tool: "Bash", action: "ask", pattern: "nomad|kubectl|ssh" },
+          { tool: "Bash", action: "ask" },
           { tool: "ReadFile", action: "allow" },
-          { tool: "ListDir", action: "allow" }
+          { tool: "ListDir", action: "allow" },
+          { tool: "Grep", action: "allow" },
+          { tool: "WriteFile", action: "ask" },
+          { tool: "EditFile", action: "ask" },
         ],
       },
       monitor: {
@@ -126,25 +133,27 @@ export namespace Agent {
         description: "System monitoring and alerting",
         tools: ["ReadFile", "Bash", "Grep"],
         permissions: [
-          { tool: "Bash", action: "allow", pattern: "ps|top|df|du" },
-          { tool: "ReadFile", action: "allow" }
+          { tool: "Bash", action: "ask" },
+          { tool: "ReadFile", action: "allow" },
+          { tool: "Grep", action: "allow" },
         ],
       },
       analyze: {
         name: "analyze",
         description: "Log and error analysis",
-        tools: ["ReadFile", "Grep"],
+        tools: ["ReadFile", "Grep", "ListDir"],
         permissions: [
           { tool: "ReadFile", action: "allow" },
-          { tool: "Grep", action: "allow" }
+          { tool: "Grep", action: "allow" },
+          { tool: "ListDir", action: "allow" },
         ],
       },
       "ci-cd": {
         name: "ci-cd",
         description: "CI/CD pipeline automation",
-        tools: ["ReadFile", "ListDir", "Bash", "Grep"],
+        tools: ["ReadFile", "ListDir", "Bash", "Grep", "WriteFile", "EditFile"],
         permissions: [
-          { tool: "*", action: "allow" }
+          { tool: "*", action: "ask" }
         ],
       },
       security: {
@@ -152,43 +161,51 @@ export namespace Agent {
         description: "Security scanning and compliance",
         tools: ["ReadFile", "ListDir", "Bash", "Grep"],
         permissions: [
-          { tool: "Bash", action: "allow", pattern: "snyk|trivy|audit" },
-          { tool: "ReadFile", action: "allow" }
+          { tool: "Bash", action: "ask" },
+          { tool: "ReadFile", action: "allow" },
+          { tool: "ListDir", action: "allow" },
+          { tool: "Grep", action: "allow" },
         ],
       },
       performance: {
         name: "performance",
         description: "Performance and load testing",
-        tools: ["ReadFile", "Bash"],
+        tools: ["ReadFile", "Bash", "Grep"],
         permissions: [
-          { tool: "Bash", action: "allow", pattern: "k6|ab|wrk" },
-          { tool: "ReadFile", action: "allow" }
+          { tool: "Bash", action: "ask" },
+          { tool: "ReadFile", action: "allow" },
+          { tool: "Grep", action: "allow" },
         ],
       },
       infrastructure: {
         name: "infrastructure",
         description: "Infrastructure-as-Code management",
-        tools: ["ReadFile", "ListDir", "Bash"],
+        tools: ["ReadFile", "ListDir", "Bash", "WriteFile", "EditFile"],
         permissions: [
-          { tool: "Bash", action: "ask", pattern: "terraform|pulse|pulumi" },
-          { tool: "ReadFile", action: "allow" }
+          { tool: "Bash", action: "ask" },
+          { tool: "ReadFile", action: "allow" },
+          { tool: "ListDir", action: "allow" },
+          { tool: "WriteFile", action: "ask" },
+          { tool: "EditFile", action: "ask" },
         ],
       },
       incident: {
         name: "incident",
         description: "Incident response and troubleshooting",
-        tools: ["ReadFile", "Bash", "Grep"],
+        tools: ["ReadFile", "Bash", "Grep", "ListDir"],
         permissions: [
-          { tool: "*", action: "allow" }
+          { tool: "*", action: "ask" }
         ],
       },
       database: {
         name: "database",
         description: "Database operations and optimization",
-        tools: ["ReadFile", "Bash"],
+        tools: ["ReadFile", "Bash", "Grep", "ListDir"],
         permissions: [
-          { tool: "Bash", action: "ask", pattern: "psql|mysql|mongo" },
-          { tool: "ReadFile", action: "allow" }
+          { tool: "Bash", action: "ask" },
+          { tool: "ReadFile", action: "allow" },
+          { tool: "ListDir", action: "allow" },
+          { tool: "Grep", action: "allow" },
         ],
       },
       router: {
@@ -281,57 +298,117 @@ Respond ONLY with the agent name.`
         throw new Error("Ollama provider is not available")
       }
 
-      // Build messages
+      // Session management
+      const sessionId = request.sessionId || "default"
+      Session.addUserMessage(sessionId, task)
+      await Session.compactIfNeeded(sessionId)
+
+      // Read workspace session.md for persistent memory
+      const sessionMd = await Session.readSessionMd()
+
+      // Build system prompt with full context
+      let systemPrompt = `${capability.prompt}
+
+Project Environment:
+Active Workspace: ${workspace}
+
+Use tools to explore and act. ALWAYS use ReadFile/ListDir to check actual file contents before making claims. Do NOT hallucinate file contents or project structure — verify with tools first.
+
+Available Tools: ${ToolRegistry.listTools().join(", ")}
+
+IMPORTANT: To call a tool, use the following format:
+Tool: ToolName
+Input: {"arg1": "val1"}
+
+You can chain multiple thoughts and tool calls. Wait for Observation after each call.
+When you have gathered enough information, provide your final answer WITHOUT any Tool/Input block.`
+
+      if (sessionMd) {
+        systemPrompt += `\n\nSession Notes (persistent memory from this workspace):\n${sessionMd}`
+      }
+
+      // Build messages: system + session history + current task
       const messages: Message[] = [
-        Provider.system(`${capability.prompt}\n\nProject Environment:\nYou are working in a NodeJS/Bun monorepo.\nActive Workspace: ${workspace}\n\nUse tools to explore and act.\nAvailable Tools: ${ToolRegistry.listTools().join(", ")}\n\nIMPORTANT: To call a tool, use the following format:\nTool: ToolName\nInput: {"arg1": "val1"}\n\nYou can chain multiple thoughts and tool calls. Wait for Observation after each call.`),
-        Provider.user(task),
+        Provider.system(systemPrompt),
       ]
 
-      // Add project context (simple file list - top level only for performance)
+      // Add compacted session context (previous conversation)
+      const historyMsgs = Session.buildContextMessages(sessionId)
+      // Skip the last user message since we'll add it with project context
+      const contextMsgs = historyMsgs.slice(0, -1)
+      messages.push(...contextMsgs)
+
+      // Add project context
       try {
         const files = await fs.readdir(workspace).then(f => f.slice(0, 50).filter(item => !item.includes("node_modules")).join("\n"))
         messages.push(Provider.user(`Current Project Structure at ${workspace} (Top Level):\n${files}`))
       } catch (e) {}
 
-      // Add context if provided
+      // Current task
+      messages.push(Provider.user(task))
+
+      // Add extra context if provided
       if (request.context) {
         const contextStr = JSON.stringify(request.context, null, 2)
-        messages.push(
-          Provider.user(`Additional context:\n${contextStr}`)
-        )
+        messages.push(Provider.user(`Additional context:\n${contextStr}`))
       }
 
       let iteration = 0
       let finalOutput = ""
-      
-      while (iteration < 5) { // Safety limit
+      const maxIterations = 10
+
+      while (iteration < maxIterations) {
         const response = await provider.chat({
           messages,
           stream: false,
         })
 
         const content = response.content
-        finalOutput += content + "\n"
         messages.push(Provider.assistant(content))
 
-        // Basic tool parser
-        const toolMatch = content.match(/Tool: (\w+)\nInput: (\{.*\})/m)
+        // Tool parser — supports both single-line and multi-line JSON
+        const toolMatch = content.match(/Tool:\s*(\w+)\s*\nInput:\s*(\{[\s\S]*?\})/m)
         if (toolMatch) {
           const toolName = toolMatch[1]
-          const toolInput = JSON.parse(toolMatch[2])
-          
+          let toolInput: any
+          try {
+            toolInput = JSON.parse(toolMatch[2])
+          } catch {
+            log.error(`Failed to parse tool input JSON for ${toolName}`)
+            finalOutput = content.replace(toolMatch[0], "").trim()
+            break
+          }
+
           log.info(`LLM requested tool: ${toolName}`)
           const observation = await ToolRegistry.call(toolName, toolInput, capability.permissions)
-          
+
           messages.push(Provider.user(`Observation from ${toolName}:\n${JSON.stringify(observation, null, 2)}`))
-          finalOutput += `\nObservation from ${toolName}: ${JSON.stringify(observation, null, 2)}\n`
           iteration++
         } else {
-          break // No more tool calls
+          // No tool call — this is the final answer
+          finalOutput = content
+          break
         }
       }
 
+      // If we hit max iterations, use the last LLM response
+      if (!finalOutput && messages.length > 0) {
+        const lastAssistant = [...messages].reverse().find(m => m.role === "assistant")
+        finalOutput = lastAssistant?.content || "Agent completed but produced no output."
+      }
+
       log.info(`Agent ${request.type} completed successfully after ${iteration} tool calls`)
+
+      // Save agent response to session
+      Session.addAgentMessage(sessionId, finalOutput, agentType)
+
+      // Update session.md with a brief note
+      try {
+        const briefNote = `- **${agentType}** agent: ${task.substring(0, 100)}${task.length > 100 ? "..." : ""}\n  Result: ${finalOutput.substring(0, 150)}${finalOutput.length > 150 ? "..." : ""}`
+        await Session.appendToSessionMd(briefNote)
+      } catch (e) {
+        log.warn(`Failed to update session.md: ${e}`)
+      }
 
       // Log execution to database
       try {

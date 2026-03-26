@@ -2,115 +2,86 @@ import { createSignal, onMount, onCleanup, ParentComponent, Show } from "solid-j
 import { Header } from "./components/Header"
 import { Sidebar } from "./components/Sidebar"
 import { Setup } from "./components/Setup"
-import { CommandPalette } from "./components/CommandPalette"
+import { ToastContainer } from "./components/Toast"
 
 export const App: ParentComponent = (props) => {
   const [connected, setConnected] = createSignal(false)
   const [setupComplete, setSetupComplete] = createSignal(false)
   const [checkingSetup, setCheckingSetup] = createSignal(true)
+  const [sidebarOpen, setSidebarOpen] = createSignal(false)
 
   onMount(async () => {
-    console.log("[App] Starting initial setup check...")
-    
-    // Safety timeout to ensure we don't stay in loading state forever
-    const timeout = setTimeout(() => {
-      console.warn("[App] Setup check timed out!")
-      setCheckingSetup(false)
-    }, 5000)
+    const timeout = setTimeout(() => setCheckingSetup(false), 5000)
 
-    // Check if setup is needed
     try {
-      console.log("[App] Fetching /api/health...")
       const healthResponse = await fetch("/api/health")
-      console.log("[App] Health response:", healthResponse.status)
       setConnected(healthResponse.ok)
 
       if (healthResponse.ok) {
-        // Check if Ollama is configured
         try {
-          console.log("[App] Fetching /api/config...")
           const configResponse = await fetch("/api/config")
           const config = await configResponse.json()
-          console.log("[App] Config received:", config)
-
-          // Check if we have a valid config
-          if (config.ollama?.model) {
-            setSetupComplete(true)
-          }
-        } catch (e) {
-          console.error("[App] Config check failed:", e)
-          setSetupComplete(false)
-        }
+          if (config.ollama?.model) setSetupComplete(true)
+        } catch { setSetupComplete(false) }
       }
-    } catch (e) {
-      console.error("[App] Health check failed:", e)
-      setConnected(false)
-    } finally {
+    } catch { setConnected(false) }
+    finally {
       clearTimeout(timeout)
-      console.log("[App] Setup check complete.")
       setCheckingSetup(false)
     }
 
-    // Check connection every 30 seconds
     const intervalId = setInterval(async () => {
       try {
         const response = await fetch("/api/health")
         setConnected(response.ok)
-      } catch {
-        setConnected(false)
-      }
+      } catch { setConnected(false) }
     }, 30000)
 
-    // Cleanup interval on unmount
-    onCleanup(() => {
-      clearInterval(intervalId)
-    })
+    onCleanup(() => clearInterval(intervalId))
   })
 
-  const handleSetupComplete = () => {
-    setSetupComplete(true)
-  }
-
-  // Show main app
   return (
     <Show
       when={!checkingSetup()}
       fallback={
-        <div
-          style={{
-            display: "flex",
-            "align-items": "center",
-            "justify-content": "center",
-            height: "100vh",
-            background: "var(--bg-primary)",
-          }}
-        >
-          <div style={{ "text-align": "center" }}>
-            <h2>Loading Rouge...</h2>
-          </div>
+        <div style={{
+          display: "flex",
+          "align-items": "center",
+          "justify-content": "center",
+          height: "100vh",
+          background: "var(--bg-primary)",
+          "flex-direction": "column",
+          gap: "1rem",
+        }}>
+          <div style={{ "font-size": "2rem", animation: "pulse 1.5s ease-in-out infinite" }}>✨</div>
+          <div style={{ color: "var(--text-tertiary)", "font-size": "14px" }}>Loading Rouge.ai...</div>
         </div>
       }
     >
       <Show
         when={setupComplete()}
-        fallback={<Setup onComplete={handleSetupComplete} />}
+        fallback={<Setup onComplete={() => setSetupComplete(true)} />}
       >
-        <div style={{ 
-          display: "flex", 
-          "flex-direction": "column", 
+        <div style={{
+          display: "flex",
+          "flex-direction": "column",
           height: "100vh",
           width: "100%",
-          background: "radial-gradient(circle at top right, #111111, #050505)"
+          background: "var(--bg-primary)",
+          position: "relative",
+          overflow: "hidden",
         }}>
-          <CommandPalette />
-          <Header connected={connected()} />
-          <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-            <Sidebar />
-            <main style={{ 
-              flex: 1, 
-              overflow: "auto",
-              padding: "0" 
-            }}>
+          {/* Ambient background */}
+          <div class="ambient-bg" />
+
+          <ToastContainer />
+          <Header
+            connected={connected()}
+            onMenuToggle={() => setSidebarOpen(!sidebarOpen())}
+          />
+          <div style={{ display: "flex", flex: 1, overflow: "hidden", position: "relative", "z-index": 1 }}>
+            <Sidebar open={sidebarOpen()} onClose={() => setSidebarOpen(false)} />
+            <main style={{ flex: 1, overflow: "auto" }}>
               <div class="container">
                 {props.children}
               </div>

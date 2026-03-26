@@ -55,6 +55,44 @@ export namespace Server {
       return c.json(config)
     })
 
+    // Dashboard stats endpoint
+    api.get("/stats", async (c) => {
+      try {
+        const { DatabaseTool } = await import("../tool/database.js")
+        const [wfStats, testStats, deployments, execLogs] = await Promise.all([
+          DatabaseTool.getWorkflowStats(),
+          DatabaseTool.getTestStats(),
+          DatabaseTool.listDeployments({ limit: 5 }),
+          DatabaseTool.listExecutionLogs({ limit: 10 }),
+        ])
+        return c.json({
+          workflows: wfStats.stats || { total: 0, by_status: {} },
+          tests: testStats.stats || { total_runs: 0, total_passed: 0, total_failed: 0, by_status: {} },
+          deployments: {
+            total: deployments.count || 0,
+            recent: deployments.deployments || [],
+          },
+          executions: {
+            total: execLogs.count || 0,
+            recent: (execLogs.logs || []).map((l: any) => ({
+              id: l.id,
+              agent_type: l.agent_type,
+              task: l.task?.substring(0, 80),
+              success: l.success,
+              started_at: l.started_at,
+            })),
+          },
+        })
+      } catch (e: any) {
+        return c.json({
+          workflows: { total: 0, by_status: {} },
+          tests: { total_runs: 0, total_passed: 0, total_failed: 0, by_status: {} },
+          deployments: { total: 0, recent: [] },
+          executions: { total: 0, recent: [] },
+        })
+      }
+    })
+
     api.get("/files/list", async (c) => {
       const dir = c.req.query("path") || process.cwd()
       try {

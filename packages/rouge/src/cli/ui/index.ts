@@ -240,6 +240,93 @@ ${gray}        DEVOPS SECURITY & AUTOMATION OS${colors.reset}
   }
 
   /**
+   * Render markdown-like text to terminal with ANSI formatting
+   */
+  export function renderMarkdown(text: string): void {
+    const lines = text.split("\n")
+    let inCodeBlock = false
+    let codeLang = ""
+
+    for (const line of lines) {
+      // Code block fence
+      if (line.trimStart().startsWith("```")) {
+        if (!inCodeBlock) {
+          inCodeBlock = true
+          codeLang = line.trimStart().slice(3).trim()
+          console.log(`${colors.dim}┌─ ${codeLang || "code"} ${"─".repeat(Math.max(0, 44 - (codeLang || "code").length))}${colors.reset}`)
+        } else {
+          inCodeBlock = false
+          codeLang = ""
+          console.log(`${colors.dim}└${"─".repeat(50)}${colors.reset}`)
+        }
+        continue
+      }
+
+      if (inCodeBlock) {
+        console.log(`${colors.dim}│${colors.reset} ${colors.gray}${line}${colors.reset}`)
+        continue
+      }
+
+      // Headings
+      if (line.startsWith("### ")) {
+        console.log(`${colors.bold}${colors.cyan}   ${line.slice(4)}${colors.reset}`)
+        continue
+      }
+      if (line.startsWith("## ")) {
+        console.log(`${colors.bold}${colors.blue}  ${line.slice(3)}${colors.reset}`)
+        continue
+      }
+      if (line.startsWith("# ")) {
+        console.log(`\n${colors.bold}${colors.magenta}${line.slice(2)}${colors.reset}`)
+        console.log(`${colors.dim}${"─".repeat(line.length - 2)}${colors.reset}`)
+        continue
+      }
+
+      // Horizontal rule
+      if (/^[-*_]{3,}$/.test(line.trim())) {
+        console.log(`${colors.dim}${"─".repeat(50)}${colors.reset}`)
+        continue
+      }
+
+      // Bullet lists
+      if (/^\s*[-*+]\s/.test(line)) {
+        const formatted = applyInline(line.replace(/^(\s*)[-*+]\s/, "$1"))
+        console.log(`  ${colors.cyan}•${colors.reset} ${formatted}`)
+        continue
+      }
+
+      // Numbered lists
+      if (/^\s*\d+\.\s/.test(line)) {
+        const match = line.match(/^(\s*)(\d+)\.\s(.*)/)
+        if (match) {
+          const formatted = applyInline(match[3])
+          console.log(`  ${colors.cyan}${match[2]}.${colors.reset} ${formatted}`)
+          continue
+        }
+      }
+
+      // Regular line with inline formatting
+      console.log(applyInline(line))
+    }
+
+    // Close unclosed code block
+    if (inCodeBlock) {
+      console.log(`${colors.dim}└${"─".repeat(50)}${colors.reset}`)
+    }
+  }
+
+  /** Apply inline markdown formatting (bold, code, italic) */
+  function applyInline(text: string): string {
+    return text
+      // Bold
+      .replace(/\*\*(.+?)\*\*/g, `${colors.bold}$1${colors.reset}`)
+      // Inline code
+      .replace(/`([^`]+)`/g, `${colors.cyan}$1${colors.reset}`)
+      // Italic
+      .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, `${colors.dim}$1${colors.reset}`)
+  }
+
+  /**
    * Clear screen
    */
   export function clear(): void {

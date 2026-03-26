@@ -3,6 +3,7 @@ import { SystemTool } from "./system.js"
 import { FileTool } from "./file.js"
 import { DatabaseTool } from "./database.js"
 import { z } from "zod"
+import readline from "readline"
 
 const log = Log.create({ service: "tool:registry" })
 
@@ -70,11 +71,14 @@ export class ToolRegistry {
       log.warn(`Permission denied for tool ${name}`)
       return `Error: Permission denied for tool ${name}`
     }
-    
-    // For now, "ask" is treated as "allow" since we don't have interactive CLI here yet, 
-    // but in a real app this would trigger a UI prompt.
+
     if (permission === "ask") {
-      log.info(`Permission "ask" for tool ${name}, auto-allowing for demo`)
+      const summary = this.describeToolCall(name, input)
+      const allowed = await this.promptUser(summary)
+      if (!allowed) {
+        log.info(`User denied tool ${name}`)
+        return `Tool ${name} was denied by user.`
+      }
     }
 
     try {
@@ -88,13 +92,11 @@ export class ToolRegistry {
   }
 
   private static checkPermission(name: string, input: any, rules: PermissionRule[]): PermissionAction {
-    // Default to deny for dangerous tools if no rules match
-    const dangerousTools = ["Bash", "WriteFile", "DeleteFile"]
+    const dangerousTools = ["Bash", "WriteFile", "EditFile", "DeleteFile"]
     let action: PermissionAction = dangerousTools.includes(name) ? "deny" : "allow"
 
     for (const rule of rules) {
       if (rule.tool === "*" || rule.tool === name) {
-        // Pattern matching for bash
         if (name === "Bash" && rule.pattern && input.command) {
           if (new RegExp(rule.pattern).test(input.command)) {
             action = rule.action
@@ -106,6 +108,66 @@ export class ToolRegistry {
     }
 
     return action
+  }
+
+  /** Describe a tool call for the permission prompt */
+  private static describeToolCall(name: string, input: any): string {
+    switch (name) {
+      case "Bash":
+        return `Run command: ${input.command}`
+      case "WriteFile":
+        return `Write file: ${input.path} (${input.content?.length || 0} chars)`
+      case "EditFile":
+        return `Edit file: ${input.path}`
+      default:
+        return `Execute tool: ${name} with ${JSON.stringify(input).substring(0, 100)}`
+    }
+  }
+
+  /** Prompt user for permission in CLI */
+  private static async promptUser(description: string): Promise<boolean> {
+    // If not a TTY (e.g. running in API server mode), auto-allow
+    if (!process.stdin.isTTY) {
+      log.info(`Non-interactive mode, auto-allowing: ${description}`)
+      return true
+    }
+
+    const yellow = "\x1b[33m"
+    const cyan = "\x1b[36m"
+    const reset = "\x1b[0m"
+    const bold = "\x1b[1m"
+    const green = "\x1b[32m"
+
+    process.stdout.write(`\n${yellow}${bold}? Permission needed${reset}\n`)
+    process.stdout.write(`  ${cyan}${description}${reset}\n`)
+    process.stdout.write(`  Allow? ${yellow}[Y/n]${reset} `)
+
+    // Read a single keypress without creating a competing readline
+    return new Promise((resolve) => {
+      const wasRaw = process.stdin.isRaw
+      if (process.stdin.isTTY) process.stdin.setRawMode(true)
+      process.stdin.resume()
+
+      const onData = (buf: Buffer) => {
+        process.stdin.removeListener("data", onData)
+        if (process.stdin.isTTY) process.stdin.setRawMode(wasRaw)
+
+        const ch = buf.toString().trim().toLowerCase()
+        // Enter, y, Y = allow. n, N = deny. Ctrl+C = deny.
+        if (ch === "\x03") { // Ctrl+C
+          process.stdout.write("n\n")
+          resolve(false)
+        } else if (ch === "n") {
+          process.stdout.write(`${ch}\n`)
+          resolve(false)
+        } else {
+          process.stdout.write(`${green}y${reset}\n`)
+          resolve(true)
+        }
+      }
+
+      process.stdin.on("data", onData)
+    })
   }
 
   static listTools() {

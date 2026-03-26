@@ -16,6 +16,7 @@ interface InteractiveState {
   config: Awaited<ReturnType<typeof Config.load>>
   selectedAgent: AgentType
   connected: boolean
+  sessionId: string
 }
 
 export namespace Interactive {
@@ -33,6 +34,7 @@ export namespace Interactive {
       config: await Config.load(),
       selectedAgent: "router",
       connected: false,
+      sessionId: `cli-${Date.now()}`,
     }
 
     // Show welcome & Init
@@ -336,6 +338,7 @@ export namespace Interactive {
         type: agentName,
         task,
         stream: false,
+        sessionId: state.sessionId,
       })
 
       if (result.success) {
@@ -343,7 +346,7 @@ export namespace Interactive {
         UI.nl()
         UI.divider()
         UI.nl()
-        console.log(result.output)
+        UI.renderMarkdown(result.output)
         UI.nl()
         UI.divider()
       } else {

@@ -14,6 +14,7 @@ export interface AgentExecuteRequest {
   task: string
   context?: Record<string, any>
   stream?: boolean
+  sessionId?: string
 }
 
 export interface AgentExecuteResponse {
