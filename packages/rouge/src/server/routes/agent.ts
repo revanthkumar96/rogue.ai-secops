@@ -37,7 +37,19 @@ app.post(
   zValidator(
     "json",
     z.object({
-      type: z.enum(["test", "deploy", "monitor", "analyze"]),
+      type: z.enum([
+        "test",
+        "deploy",
+        "monitor",
+        "analyze",
+        "ci-cd",
+        "security",
+        "performance",
+        "infrastructure",
+        "incident",
+        "database",
+        "router",
+      ]),
       task: z.string(),
       context: z.record(z.any()).optional(),
       stream: z.boolean().default(false),

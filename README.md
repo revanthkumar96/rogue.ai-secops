@@ -1,6 +1,6 @@
-# Rouge - DevOps & Testing Automation Platform
+# Rouge.ai - The Fairy Tail
 
-> AI-powered automation for DevOps workflows and software testing using local LLMs
+> An intelligent AI-powered automation fairy that orchestrates your DevOps dreams using local LLMs
 
 <p align="center">
   <img src="https://img.shields.io/badge/TypeScript-5.8+-blue.svg" alt="TypeScript">
@@ -53,39 +53,36 @@ rouge/
 - **AI**: Ollama (local LLM server)
 - **Web**: SolidJS + Vite
 
-## Installation
+## 🚀 Quick Start (60 seconds!)
 
 ### Prerequisites
 
-```bash
-# 1. Install Bun
-curl -fsSL https://bun.sh/install | bash
+1. **Install Bun**: https://bun.sh/install
+2. **Install Ollama**: https://ollama.ai/download
+3. **Pull AI model**: `ollama pull llama3.2:3b`
+4. **Start Ollama**: `ollama serve` (in separate terminal)
 
-# 2. Install Ollama
-curl -fsSL https://ollama.ai/install.sh | sh
-
-# 3. Pull AI model
-ollama pull llama3.2:3b
-```
-
-### Quick Start
+### Choose Your Mode
 
 ```bash
-# Clone repository
-cd rouge
+# Full Mode - Web UI + API (Recommended)
+bun run start
 
-# Install dependencies
-bun install
+# Web UI Mode - Browser interface
+bun run start:web
 
-# Start interactive mode
-rouge
-
-# Or start API server
-rouge serve
-
-# Or start web UI
-cd packages/web && bun dev
+# CLI Mode - Terminal interface
+bun run start:cli
 ```
+
+**That's it!** 🎉
+
+- 📡 API Server: http://localhost:3000
+- 🌐 Web UI: http://localhost:3001 (Full/Web mode)
+- ⌨️  CLI: Terminal commands (CLI mode)
+
+See **[START_MODES.md](./START_MODES.md)** for detailed mode explanations.
+See **[QUICKSTART.md](./QUICKSTART.md)** for setup instructions.
 
 ## Commands
 

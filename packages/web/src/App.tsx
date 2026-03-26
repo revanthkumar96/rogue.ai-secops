@@ -1,4 +1,4 @@
-import { createSignal, onMount, ParentComponent, Show } from "solid-js"
+import { createSignal, onMount, onCleanup, ParentComponent, Show } from "solid-js"
 import { Header } from "./components/Header"
 import { Sidebar } from "./components/Sidebar"
 import { Setup } from "./components/Setup"
@@ -52,7 +52,7 @@ export const App: ParentComponent = (props) => {
     }
 
     // Check connection every 30 seconds
-    setInterval(async () => {
+    const intervalId = setInterval(async () => {
       try {
         const response = await fetch("/api/health")
         setConnected(response.ok)
@@ -60,6 +60,11 @@ export const App: ParentComponent = (props) => {
         setConnected(false)
       }
     }, 30000)
+
+    // Cleanup interval on unmount
+    onCleanup(() => {
+      clearInterval(intervalId)
+    })
   })
 
   const handleSetupComplete = () => {

@@ -18,7 +18,7 @@ export const ServeCommand = cmd({
         default: "127.0.0.1",
       }),
   handler: async (args) => {
-    const server = Server.listen({
+    const server = await Server.listen({
       port: args.port,
       hostname: args.host,
     })

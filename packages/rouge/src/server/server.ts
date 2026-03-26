@@ -5,6 +5,7 @@ import { Log } from "../util/log"
 import { lazy } from "../util/lazy"
 import { registerRoutes } from "./routes/index.js"
 import { Config } from "../config/config.js"
+import { migrate } from "../storage/migrate.js"
 import fs from "fs/promises"
 import path from "path"
 
@@ -74,7 +75,14 @@ export namespace Server {
     return app
   }
 
-  export function listen(opts: { port: number; hostname: string }) {
+  export async function listen(opts: { port: number; hostname: string }) {
+    // Run database migrations
+    try {
+      await migrate()
+    } catch (error) {
+      log.error("Failed to run migrations, continuing anyway...", error)
+    }
+
     const app = createApp({})
 
     log.info("starting server", opts)
