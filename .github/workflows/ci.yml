@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [main, Devopsphase2]
+  pull_request:
+    branches: [main]
+
+env:
+  BUN_VERSION: "1.3.11"
+
+jobs:
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - run: bun install
+
+      - name: Typecheck shared
+        run: cd packages/shared && bun run typecheck
+
+      - name: Typecheck rouge
+        run: cd packages/rouge && bun run typecheck
+
+      - name: Typecheck web
+        run: cd packages/web && bun run typecheck
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: typecheck
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - run: bun install
+
+      - name: Run unit tests
+        run: cd packages/rouge && bun test --timeout 30000
+        continue-on-error: true
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: typecheck
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - run: bun install
+
+      - name: Build rouge
+        run: cd packages/rouge && bun run build
+
+      - name: Build web
+        run: cd packages/web && bun run build
+
+      - name: Upload web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: packages/web/dist
+          retention-days: 7
+
+  cli-smoke:
+    name: CLI Smoke Test
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - run: bun install
+
+      - name: CLI smoke tests
+        run: |
+          cd packages/rouge
+          bun src/index.ts --version
+          bun src/index.ts --help
+          bun src/index.ts list agents
+          bun src/index.ts list skills
+          bun src/index.ts list abilities

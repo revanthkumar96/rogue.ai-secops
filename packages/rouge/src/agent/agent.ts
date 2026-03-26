@@ -9,6 +9,7 @@ import fs from "fs/promises"
 import path from "path"
 import { fileURLToPath } from "url"
 import { ToolRegistry } from "../tool/registry.js"
+import { DatabaseTool } from "../tool/database.js"
 
 /**
  * Agent system for DevOps automation
@@ -332,6 +333,21 @@ Respond ONLY with the agent name.`
 
       log.info(`Agent ${request.type} completed successfully after ${iteration} tool calls`)
 
+      // Log execution to database
+      try {
+        await DatabaseTool.createExecutionLog({
+          agent_type: agentType,
+          task,
+          context: request.context,
+          output: finalOutput,
+          success: true,
+          metadata: { iterations: iteration },
+          model_used: provider.model,
+        })
+      } catch (dbError) {
+        log.warn(`Failed to log execution to database: ${dbError}`)
+      }
+
       return {
         type: request.type,
         output: finalOutput,
@@ -343,6 +359,20 @@ Respond ONLY with the agent name.`
       }
     } catch (error: any) {
       log.error(`Agent ${request.type} failed: ${error.message}`)
+
+      // Log execution to database (failure)
+      try {
+        await DatabaseTool.createExecutionLog({
+          agent_type: agentType,
+          task,
+          context: request.context,
+          output: error.message,
+          success: false,
+          metadata: { error: error.message },
+        })
+      } catch (dbError) {
+        log.warn(`Failed to log execution to database: ${dbError}`)
+      }
 
       return {
         type: request.type,

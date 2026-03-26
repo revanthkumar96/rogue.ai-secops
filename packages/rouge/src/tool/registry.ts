@@ -1,6 +1,7 @@
 import { Log } from "../util/log.js"
 import { SystemTool } from "./system.js"
 import { FileTool } from "./file.js"
+import { DatabaseTool } from "./database.js"
 import { z } from "zod"
 
 const log = Log.create({ service: "tool:registry" })
@@ -25,6 +26,32 @@ export class ToolRegistry {
     this.register("Grep", SystemTool.grep, z.object({ pattern: z.string(), path: z.string().default("."), recursive: z.boolean().default(true) }))
     this.register("EditFile", FileTool.editFile, z.object({ path: z.string(), oldString: z.string(), newString: z.string() }))
     this.register("WriteFile", FileTool.writeFile, z.object({ path: z.string(), content: z.string() }))
+
+    // Register Database Tools - Workflow
+    this.register("CreateWorkflow", DatabaseTool.createWorkflow, z.object({ name: z.string(), description: z.string().optional(), steps: z.any() }))
+    this.register("ReadWorkflow", DatabaseTool.readWorkflow, z.object({ id: z.string() }))
+    this.register("UpdateWorkflow", DatabaseTool.updateWorkflow, z.object({ id: z.string(), name: z.string().optional(), description: z.string().optional(), steps: z.any().optional(), status: z.string().optional() }))
+    this.register("DeleteWorkflow", DatabaseTool.deleteWorkflow, z.object({ id: z.string() }))
+    this.register("ListWorkflows", DatabaseTool.listWorkflows, z.object({ status: z.string().optional(), limit: z.number().optional() }))
+
+    // Register Database Tools - Test Runs
+    this.register("CreateTestRun", DatabaseTool.createTestRun, z.object({ name: z.string(), pattern: z.string().optional() }))
+    this.register("UpdateTestRun", DatabaseTool.updateTestRun, z.object({ id: z.string(), status: z.string().optional(), total_tests: z.number().optional(), passed: z.number().optional(), failed: z.number().optional(), skipped: z.number().optional(), duration_ms: z.number().optional(), coverage: z.any().optional() }))
+    this.register("ListTestRuns", DatabaseTool.listTestRuns, z.object({ status: z.string().optional(), limit: z.number().optional() }))
+    this.register("CreateTestResult", DatabaseTool.createTestResult, z.object({ test_run_id: z.string(), name: z.string(), file: z.string(), status: z.string(), duration_ms: z.number(), error: z.string().optional(), stack: z.string().optional() }))
+
+    // Register Database Tools - Deployments
+    this.register("CreateDeployment", DatabaseTool.createDeployment, z.object({ environment: z.string(), version: z.string(), config: z.any().optional() }))
+    this.register("UpdateDeployment", DatabaseTool.updateDeployment, z.object({ id: z.string(), status: z.string().optional(), logs: z.string().optional(), error: z.string().optional(), rolled_back: z.boolean().optional() }))
+    this.register("ListDeployments", DatabaseTool.listDeployments, z.object({ environment: z.string().optional(), status: z.string().optional(), limit: z.number().optional() }))
+
+    // Register Database Tools - Execution Logs
+    this.register("CreateExecutionLog", DatabaseTool.createExecutionLog, z.object({ workflow_id: z.string().optional(), agent_type: z.string().optional(), task: z.string(), context: z.any().optional(), output: z.string().optional(), success: z.boolean(), metadata: z.any().optional(), model_used: z.string().optional() }))
+    this.register("ListExecutionLogs", DatabaseTool.listExecutionLogs, z.object({ workflow_id: z.string().optional(), agent_type: z.string().optional(), success: z.boolean().optional(), limit: z.number().optional() }))
+
+    // Register Database Tools - Analytics
+    this.register("GetWorkflowStats", DatabaseTool.getWorkflowStats, z.object({}))
+    this.register("GetTestStats", DatabaseTool.getTestStats, z.object({}))
   }
 
   static register(name: string, fn: Function, schema: z.ZodObject<any>) {

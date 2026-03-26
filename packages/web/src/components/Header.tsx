@@ -8,69 +8,125 @@ export const Header: Component<HeaderProps> = (props) => {
   return (
     <header
       style={{
-        background: "rgba(5, 5, 5, 0.8)",
-        "border-bottom": "1px solid var(--border-strong)",
-        padding: "0.75rem 2rem",
+        background: "linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)",
+        "border-bottom": "1px solid rgba(102, 126, 234, 0.2)",
+        padding: "0.75rem clamp(1rem, 3vw, 2rem)",
         display: "flex",
         "justify-content": "space-between",
         "align-items": "center",
-        "backdrop-filter": "blur(12px)",
-        "-webkit-backdrop-filter": "blur(12px)",
+        "backdrop-filter": "blur(20px)",
+        "-webkit-backdrop-filter": "blur(20px)",
         position: "sticky",
         top: 0,
         "z-index": 100,
-        height: "64px"
+        height: "64px",
+        "box-shadow": "0 4px 16px rgba(0, 0, 0, 0.1)"
       }}
     >
-      <div style={{ display: "flex", "align-items": "center", gap: "1rem" }}>
-        {/* Simple breadcrumb or breadcrumb-like title */}
-        <div style={{ display: "flex", "align-items": "center", gap: "0.5rem", "font-size": "14px" }}>
-          <span style={{ color: "var(--text-tertiary)" }}>Console</span>
-          <span style={{ color: "var(--border-strong)" }}>/</span>
-          <span style={{ color: "var(--text-primary)", "font-weight": "600" }}>Dashboard</span>
+      <div style={{ display: "flex", "align-items": "center", gap: "clamp(0.5rem, 2vw, 1rem)" }}>
+        {/* Logo */}
+        <div style={{
+          display: "flex",
+          "align-items": "center",
+          gap: "0.5rem",
+          "font-size": "clamp(16px, 3vw, 20px)",
+          "font-weight": "800"
+        }}>
+          <span style={{ "font-size": "clamp(20px, 4vw, 24px)" }}>✨</span>
+          <span style={{
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            "-webkit-background-clip": "text",
+            "-webkit-text-fill-color": "transparent",
+            "letter-spacing": "-0.02em"
+          }}>
+            Rouge.ai
+          </span>
+        </div>
+
+        {/* Breadcrumb - hide on mobile */}
+        <div class="breadcrumb" style={{
+          display: "flex",
+          "align-items": "center",
+          gap: "0.5rem",
+          "font-size": "clamp(11px, 2vw, 13px)",
+          "margin-left": "clamp(0.5rem, 2vw, 1rem)"
+        }}>
+          <span style={{ color: "rgba(255, 255, 255, 0.4)" }}>fairy-tail</span>
+          <span style={{ color: "rgba(102, 126, 234, 0.4)" }}>/</span>
+          <span style={{ color: "rgba(255, 255, 255, 0.7)", "font-weight": "600" }}>command-center</span>
         </div>
       </div>
-      
-      <div style={{ display: "flex", "align-items": "center", gap: "1.5rem" }}>
-        <div style={{ 
-          display: "flex", 
-          "align-items": "center", 
+
+      <div style={{ display: "flex", "align-items": "center", gap: "clamp(0.75rem, 2vw, 1.5rem)" }}>
+        {/* Connection Status */}
+        <div style={{
+          display: "flex",
+          "align-items": "center",
           gap: "0.5rem",
-          padding: "0.375rem 0.75rem",
-          "border-radius": "var(--radius-md)",
-          background: "var(--bg-secondary)",
-          border: "1px solid var(--border)"
+          padding: "0.375rem clamp(0.5rem, 2vw, 0.75rem)",
+          "border-radius": "2rem",
+          background: props.connected
+            ? "rgba(16, 185, 129, 0.1)"
+            : "rgba(239, 68, 68, 0.1)",
+          border: props.connected
+            ? "1px solid rgba(16, 185, 129, 0.3)"
+            : "1px solid rgba(239, 68, 68, 0.3)"
         }}>
           <div
             style={{
               width: "6px",
               height: "6px",
               "border-radius": "50%",
-              background: props.connected ? "var(--success)" : "var(--danger)",
-              "box-shadow": props.connected ? "0 0 8px var(--success)" : "none"
+              background: props.connected ? "#10b981" : "#ef4444",
+              "box-shadow": props.connected ? "0 0 8px #10b981" : "0 0 8px #ef4444",
+              animation: props.connected ? "pulse 2s ease-in-out infinite" : "none"
             }}
           />
-          <span style={{ "font-size": "12px", "font-weight": "500", color: "var(--text-secondary)" }}>
-            {props.connected ? "System Online" : "System Offline"}
+          <span style={{
+            "font-size": "clamp(10px, 2vw, 12px)",
+            "font-weight": "600",
+            color: props.connected ? "#10b981" : "#ef4444",
+            "white-space": "nowrap"
+          }}>
+            {props.connected ? "ONLINE" : "OFFLINE"}
           </span>
         </div>
-        
-        <div style={{ 
-          width: "32px", 
-          height: "32px", 
-          "border-radius": "50%", 
-          background: "var(--accent-soft)",
-          border: "1px solid var(--accent)",
+
+        {/* User Avatar */}
+        <div style={{
+          width: "clamp(28px, 5vw, 32px)",
+          height: "clamp(28px, 5vw, 32px)",
+          "border-radius": "50%",
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          border: "2px solid rgba(102, 126, 234, 0.3)",
           display: "flex",
           "align-items": "center",
           "justify-content": "center",
-          "font-size": "14px",
-          color: "var(--accent)",
-          "font-weight": "600"
-        }}>
-          S
+          "font-size": "clamp(12px, 3vw, 14px)",
+          color: "white",
+          "font-weight": "700",
+          cursor: "pointer",
+          transition: "all 0.3s ease"
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.1)"}
+        onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+        >
+          🧙
         </div>
       </div>
+
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+
+        @media (max-width: 640px) {
+          .breadcrumb {
+            display: none !important;
+          }
+        }
+      `}</style>
     </header>
   )
 }
