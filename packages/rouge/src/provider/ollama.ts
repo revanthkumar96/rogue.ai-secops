@@ -181,7 +181,9 @@ export namespace Ollama {
    */
   export async function Default(): Promise<OllamaProvider> {
     const config = await Config.get("ollama")
-    return new OllamaProvider(config.url, config.model, config.timeout)
+    // Enforce minimum 120s timeout — cloud models need more time
+    const timeout = Math.max(config.timeout, 120000)
+    return new OllamaProvider(config.url, config.model, timeout)
   }
 
   /**

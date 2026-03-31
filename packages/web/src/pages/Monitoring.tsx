@@ -1,111 +1,93 @@
-import { Component, createSignal, onMount } from "solid-js"
+import { Component, createSignal, onMount, onCleanup, Show } from "solid-js"
 import { api } from "../lib/api"
+import { SkeletonStatCard } from "../components/Skeleton"
 
 export const MonitoringPage: Component = () => {
-  const [stats, setStats] = createSignal({ status: "checking", uptime: "0%" })
+  const [ollamaOk, setOllamaOk] = createSignal(false)
+  const [apiOk, setApiOk] = createSignal(false)
+  const [dbOk, setDbOk] = createSignal(false)
+  const [loading, setLoading] = createSignal(true)
+  const [execCount, setExecCount] = createSignal(0)
 
-  onMount(async () => {
+  const check = async () => {
     try {
-      const response = await api.health()
-      if (response.status === "ok") {
-        setStats({ status: "healthy", uptime: "99.9%" })
-      }
-    } catch (error) {
-      setStats({ status: "unhealthy", uptime: "0%" })
-    }
+      const health = await api.health()
+      setApiOk(health.status === "ok")
+    } catch { setApiOk(false) }
+
+    try {
+      const conn = await api.testAgentConnection()
+      setOllamaOk(conn.connected)
+    } catch { setOllamaOk(false) }
+
+    try {
+      const stats = await fetch("/api/stats").then(r => r.json())
+      setDbOk(true)
+      setExecCount(stats.executions?.total || 0)
+    } catch { setDbOk(false) }
+
+    setLoading(false)
+  }
+
+  onMount(() => {
+    check()
+    const interval = setInterval(check, 10000)
+    onCleanup(() => clearInterval(interval))
   })
 
+  const svc = (name: string, ok: () => boolean) => (
+    <div style={{
+      display: "flex", "justify-content": "space-between", "align-items": "center",
+      padding: "0.6rem 0.75rem", background: "var(--bg-primary)", "border-radius": "var(--radius-md)", border: "1px solid var(--border)",
+    }}>
+      <span style={{ "font-size": "13px", "font-weight": "500" }}>{name}</span>
+      <span class={ok() ? "badge badge-success" : "badge badge-danger"}>{ok() ? "Online" : "Offline"}</span>
+    </div>
+  )
+
   return (
-    <div style={{ padding: "2rem 0" }}>
-      <div style={{ "margin-bottom": "2.5rem" }}>
-        <h1 style={{ "font-size": "2rem", margin: 0, "letter-spacing": "-0.04em" }}>Monitoring</h1>
-        <p style={{ color: "var(--text-secondary)", margin: "0.5rem 0 0 0" }}>
-          Real-time health telemetry for your security infrastructure.
-        </p>
+    <div style={{ padding: "0.5rem 0" }}>
+      <div style={{ "margin-bottom": "1.5rem" }}>
+        <h1 style={{ "font-size": "1.5rem", margin: 0 }}>Monitoring</h1>
+        <p style={{ color: "var(--text-tertiary)", "font-size": "13px", "margin-top": "0.25rem" }}>Live service health (auto-refreshes every 10s)</p>
       </div>
 
-      <div style={{ display: "grid", "grid-template-columns": "repeat(auto-fit, minmax(320px, 1fr))", gap: "1.25rem" }}>
-        <div class="card" style={{ display: "flex", "flex-direction": "column", gap: "1.25rem" }}>
-          <div style={{ display: "flex", "justify-content": "space-between", "align-items": "center" }}>
-            <span style={{ "font-size": "0.875rem", "font-weight": "500", color: "var(--text-tertiary)" }}>System Status</span>
-            <span style={{ "font-size": "1.25rem" }}>🛰️</span>
+      <Show when={loading()}>
+        <div style={{ display: "grid", "grid-template-columns": "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem" }}>
+          <SkeletonStatCard />
+          <SkeletonStatCard />
+        </div>
+      </Show>
+
+      <Show when={!loading()}>
+        <div style={{ display: "grid", "grid-template-columns": "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem", "margin-bottom": "1.5rem" }}>
+          <div class="card" style={{ display: "flex", "flex-direction": "column", gap: "0.5rem" }}>
+            <div style={{ "font-size": "12px", color: "var(--text-tertiary)" }}>System Status</div>
+            <div style={{ display: "flex", "align-items": "center", gap: "0.5rem" }}>
+              <div style={{
+                width: "10px", height: "10px", "border-radius": "50%",
+                background: ollamaOk() && apiOk() ? "var(--success)" : "var(--danger)",
+                "box-shadow": `0 0 6px ${ollamaOk() && apiOk() ? "var(--success)" : "var(--danger)"}`,
+                animation: "pulse 2s ease-in-out infinite",
+              }} />
+              <span style={{ "font-size": "1.5rem", "font-weight": "800" }}>
+                {ollamaOk() && apiOk() ? "HEALTHY" : "DEGRADED"}
+              </span>
+            </div>
           </div>
-          <div style={{ display: "flex", "align-items": "center", gap: "0.75rem" }}>
-            <div
-              style={{
-                width: "10px",
-                height: "10px",
-                "border-radius": "50%",
-                background: stats().status === "healthy" ? "var(--success)" : "var(--danger)",
-                "box-shadow": stats().status === "healthy" ? "0 0 8px var(--success)" : "none"
-              }}
-            />
-            <span style={{ "font-size": "2rem", "font-weight": "700", "letter-spacing": "-0.04em" }}>
-              {stats().status.toUpperCase()}
-            </span>
-          </div>
-          <div style={{ "font-size": "12px", color: "var(--text-tertiary)" }}>
-            Heartbeat: Stable
+          <div class="card" style={{ display: "flex", "flex-direction": "column", gap: "0.5rem" }}>
+            <div style={{ "font-size": "12px", color: "var(--text-tertiary)" }}>Total Executions</div>
+            <div style={{ "font-size": "1.5rem", "font-weight": "800" }}>{execCount()}</div>
           </div>
         </div>
 
-        <div class="card" style={{ display: "flex", "flex-direction": "column", gap: "1.25rem" }}>
-          <div style={{ display: "flex", "justify-content": "space-between", "align-items": "center" }}>
-            <span style={{ "font-size": "0.875rem", "font-weight": "500", color: "var(--text-tertiary)" }}>System Uptime</span>
-            <span style={{ "font-size": "1.25rem" }}>⏱️</span>
-          </div>
-          <div style={{ "font-size": "2rem", "font-weight": "700", "letter-spacing": "-0.04em" }}>
-            {stats().uptime}
-          </div>
-          <div style={{ "font-size": "12px", color: "var(--success)", "font-weight": "500" }}>
-            Availability: 99.9%
-          </div>
+        <h2 style={{ "font-size": "1rem", "margin-bottom": "0.75rem" }}>Services</h2>
+        <div style={{ display: "flex", "flex-direction": "column", gap: "0.4rem" }}>
+          {svc("Ollama AI Engine", ollamaOk)}
+          {svc("Rouge API Gateway", apiOk)}
+          {svc("SQLite Database", dbOk)}
         </div>
-      </div>
-
-      <div class="card" style={{ "margin-top": "2rem", padding: "1.5rem" }}>
-        <div style={{ display: "flex", "justify-content": "space-between", "align-items": "center", "margin-bottom": "1.5rem" }}>
-          <h3 style={{ margin: 0, "font-size": "1.125rem" }}>Active Core Services</h3>
-          <span style={{ "font-size": "11px", color: "var(--text-tertiary)", "text-transform": "uppercase", "letter-spacing": "0.05em" }}>
-            3 Online
-          </span>
-        </div>
-        <div style={{ display: "flex", "flex-direction": "column", gap: "0.5rem" }}>
-          <div style={{ 
-            display: "flex", 
-            "justify-content": "space-between", 
-            padding: "0.75rem 1rem", 
-            background: "var(--bg-secondary)",
-            "border-radius": "var(--radius-md)",
-            border: "1px solid var(--border)"
-          }}>
-            <span style={{ "font-size": "14px", "font-weight": "500" }}>Ollama AI Engine</span>
-            <span class="badge badge-success">Online</span>
-          </div>
-          <div style={{ 
-            display: "flex", 
-            "justify-content": "space-between", 
-            padding: "0.75rem 1rem", 
-            background: "var(--bg-secondary)",
-            "border-radius": "var(--radius-md)",
-            border: "1px solid var(--border)"
-          }}>
-            <span style={{ "font-size": "14px", "font-weight": "500" }}>Rouge API Gateway</span>
-            <span class="badge badge-success">Online</span>
-          </div>
-          <div style={{ 
-            display: "flex", 
-            "justify-content": "space-between", 
-            padding: "0.75rem 1rem", 
-            background: "var(--bg-secondary)",
-            "border-radius": "var(--radius-md)",
-            border: "1px solid var(--border)"
-          }}>
-            <span style={{ "font-size": "14px", "font-weight": "500" }}>SQLite Database</span>
-            <span class="badge badge-success">Healthy</span>
-          </div>
-        </div>
-      </div>
+      </Show>
     </div>
   )
 }

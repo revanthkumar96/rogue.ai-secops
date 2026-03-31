@@ -1,112 +1,60 @@
-import { Component, createSignal, For, Show } from "solid-js"
+import { Component, createSignal, For, Show, onMount } from "solid-js"
 import { api, type Workflow } from "../lib/api"
+import { SkeletonList } from "../components/Skeleton"
 
 export const WorkflowsPage: Component = () => {
   const [workflows, setWorkflows] = createSignal<Workflow[]>([])
   const [loading, setLoading] = createSignal(true)
 
-  const loadWorkflows = async () => {
+  onMount(async () => {
     try {
       const response = await api.listWorkflows()
       setWorkflows(response.workflows)
-    } catch (error) {
-      console.error("Failed to load workflows:", error)
+    } catch (e) {
+      console.error("Failed to load workflows:", e)
     } finally {
       setLoading(false)
     }
-  }
+  })
 
-  loadWorkflows()
-
-  const getStatusBadge = (status: string) => {
-    const classes: Record<string, string> = {
-      pending: "badge",
-      running: "badge badge-warning",
-      completed: "badge badge-success",
-      failed: "badge badge-danger",
-    }
-    return classes[status] || "badge"
+  const statusBadge = (status: string) => {
+    const map: Record<string, string> = { pending: "badge", running: "badge badge-warning", completed: "badge badge-success", failed: "badge badge-danger" }
+    return map[status] || "badge"
   }
 
   return (
-    <div style={{ padding: "2rem 0" }}>
-      <div style={{ display: "flex", "justify-content": "space-between", "align-items": "flex-end", "margin-bottom": "2.5rem" }}>
+    <div style={{ padding: "0.5rem 0" }}>
+      <div style={{ display: "flex", "justify-content": "space-between", "align-items": "center", "margin-bottom": "1.5rem" }}>
         <div>
-          <h1 style={{ "font-size": "2rem", margin: 0, "letter-spacing": "-0.04em" }}>Workflows</h1>
-          <p style={{ color: "var(--text-secondary)", margin: "0.5rem 0 0 0" }}>
-            Automate complex multi-agent security operations.
-          </p>
+          <h1 style={{ "font-size": "1.5rem", margin: 0 }}>Workflows</h1>
+          <p style={{ color: "var(--text-tertiary)", "font-size": "13px", "margin-top": "0.25rem" }}>Multi-step automation pipelines</p>
         </div>
-        <button style={{ "font-size": "13px", padding: "0.5rem 1.25rem" }}>+ Create Workflow</button>
       </div>
 
       <Show when={loading()}>
-        <div class="card" style={{ "text-align": "center", padding: "3rem" }}>
-          <div style={{ color: "var(--text-tertiary)" }}>Loading workflows...</div>
-        </div>
+        <SkeletonList count={3} />
       </Show>
 
       <Show when={!loading() && workflows().length === 0}>
-        <div class="card" style={{ "text-align": "center", padding: "3rem", border: "1px dashed var(--border-strong)" }}>
-          <div style={{ "font-size": "2rem", "margin-bottom": "1rem" }}>📋</div>
-          <h3 style={{ margin: 0 }}>No Workflows Found</h3>
-          <p style={{ color: "var(--text-tertiary)", margin: "0.5rem 0 1.5rem 0", "font-size": "14px" }}>
-            Create your first multi-agent workflow to automate your security pipeline.
-          </p>
-          <button style={{ background: "var(--bg-tertiary)", color: "var(--text-primary)", border: "1px solid var(--border-strong)" }}>
-            Get Started
-          </button>
+        <div class="card" style={{ "text-align": "center", padding: "3rem" }}>
+          <div style={{ "font-size": "2rem", "margin-bottom": "0.75rem" }}>📋</div>
+          <div style={{ "font-weight": "600", "margin-bottom": "0.25rem" }}>No Workflows Yet</div>
+          <div style={{ "font-size": "13px", color: "var(--text-tertiary)" }}>
+            Ask an agent to create a workflow, or use the CLI.
+          </div>
         </div>
       </Show>
 
       <Show when={!loading() && workflows().length > 0}>
-        <div style={{ display: "grid", gap: "1rem" }}>
+        <div style={{ display: "flex", "flex-direction": "column", gap: "0.5rem" }}>
           <For each={workflows()}>
-            {(workflow) => (
-              <div class="card" style={{ 
-                display: "flex", 
-                "justify-content": "space-between", 
-                "align-items": "center",
-                padding: "1.25rem 1.5rem"
-              }}>
-                <div style={{ display: "flex", "align-items": "center", gap: "1.25rem" }}>
-                  <div style={{ 
-                    width: "48px", 
-                    height: "48px", 
-                    "border-radius": "var(--radius-lg)", 
-                    background: "var(--accent-soft)",
-                    display: "flex", "align-items": "center", "justify-content": "center", "font-size": "1.5rem"
-                  }}>
-                    📋
-                  </div>
-                  <div>
-                    <h3 style={{ margin: 0, "font-size": "1.125rem" }}>
-                      {workflow.name}
-                    </h3>
-                    <p style={{ color: "var(--text-tertiary)", "font-size": "13px", "margin": "0.25rem 0" }}>
-                      {workflow.description || "Automated multi-step procedure"}
-                    </p>
-                    <div style={{ display: "flex", gap: "1rem", "margin-top": "0.5rem" }}>
-                      <span style={{ "font-size": "11px", color: "var(--text-tertiary)", "text-transform": "uppercase", "letter-spacing": "0.05em" }}>
-                        {workflow.steps.length} Actions
-                      </span>
-                    </div>
-                  </div>
+            {(wf) => (
+              <div class="card" style={{ display: "flex", "justify-content": "space-between", "align-items": "center", padding: "0.75rem 1rem" }}>
+                <div style={{ "min-width": 0 }}>
+                  <div style={{ "font-weight": "600", "font-size": "14px" }}>{wf.name}</div>
+                  <div style={{ "font-size": "12px", color: "var(--text-tertiary)" }}>{wf.description || `${wf.steps?.length || 0} steps`}</div>
                 </div>
-                <div style={{ display: "flex", "align-items": "center", gap: "1.5rem" }}>
-                  <span class={getStatusBadge(workflow.status)} style={{ "text-transform": "capitalize" }}>
-                    {workflow.status}
-                  </span>
-                  <button style={{ 
-                    background: "var(--bg-tertiary)", 
-                    color: "var(--text-primary)", 
-                    border: "1px solid var(--border-strong)",
-                    "font-size": "13px",
-                    padding: "0.4rem 1rem"
-                  }}>
-                    Run Workflow
-                  </button>
-                </div>
+                <span class={statusBadge(wf.status)} style={{ "text-transform": "capitalize" }}>{wf.status}</span>
               </div>
             )}
           </For>
