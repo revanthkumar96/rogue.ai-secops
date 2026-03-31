@@ -356,6 +356,7 @@ When you have gathered enough information, provide your final answer WITHOUT any
       let iteration = 0
       let finalOutput = ""
       const maxIterations = 10
+      const toolCalls: { tool: string; input: any; output: string }[] = []
 
       while (iteration < maxIterations) {
         const response = await provider.chat({
@@ -366,7 +367,6 @@ When you have gathered enough information, provide your final answer WITHOUT any
         const content = response.content
         messages.push(Provider.assistant(content))
 
-        // Tool parser — supports both single-line and multi-line JSON
         const toolMatch = content.match(/Tool:\s*(\w+)\s*\nInput:\s*(\{[\s\S]*?\})/m)
         if (toolMatch) {
           const toolName = toolMatch[1]
@@ -382,16 +382,20 @@ When you have gathered enough information, provide your final answer WITHOUT any
           log.info(`LLM requested tool: ${toolName}`)
           const observation = await ToolRegistry.call(toolName, toolInput, capability.permissions)
 
+          toolCalls.push({
+            tool: toolName,
+            input: toolInput,
+            output: typeof observation === "string" ? observation.substring(0, 200) : JSON.stringify(observation).substring(0, 200),
+          })
+
           messages.push(Provider.user(`Observation from ${toolName}:\n${JSON.stringify(observation, null, 2)}`))
           iteration++
         } else {
-          // No tool call — this is the final answer
           finalOutput = content
           break
         }
       }
 
-      // If we hit max iterations, use the last LLM response
       if (!finalOutput && messages.length > 0) {
         const lastAssistant = [...messages].reverse().find(m => m.role === "assistant")
         finalOutput = lastAssistant?.content || "Agent completed but produced no output."
@@ -430,8 +434,9 @@ When you have gathered enough information, provide your final answer WITHOUT any
         output: finalOutput,
         success: true,
         metadata: {
-          model: provider.model, // Get model name
-          iterations: iteration
+          model: provider.model,
+          iterations: iteration,
+          toolCalls,
         },
       }
     } catch (error: any) {

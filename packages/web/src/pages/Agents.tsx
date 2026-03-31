@@ -4,6 +4,12 @@ import { Markdown } from "../components/Markdown"
 import { SkeletonPills } from "../components/Skeleton"
 import { toast } from "../components/Toast"
 
+interface ToolCall {
+  tool: string
+  input: any
+  output: string
+}
+
 interface ChatMessage {
   id: string
   role: "user" | "agent"
@@ -11,6 +17,7 @@ interface ChatMessage {
   agent?: string
   timestamp: number
   streaming?: boolean
+  toolCalls?: ToolCall[]
 }
 
 export const AgentsPage: Component = () => {
@@ -140,6 +147,7 @@ export const AgentsPage: Component = () => {
           content: response.output,
           agent: response.type,
           timestamp: Date.now(),
+          toolCalls: response.metadata?.toolCalls,
         }
         setMessages(prev => [...prev, agentMsg])
         toast("success", "Agent response complete")
@@ -325,6 +333,41 @@ export const AgentsPage: Component = () => {
                   }
                 >
                   <Markdown content={msg.content} />
+                </Show>
+
+                {/* Tool calls visualization */}
+                <Show when={msg.toolCalls && msg.toolCalls.length > 0}>
+                  <div style={{
+                    "margin-top": "0.6rem",
+                    "padding-top": "0.5rem",
+                    "border-top": "1px solid var(--border)",
+                  }}>
+                    <div style={{ "font-size": "10px", "font-weight": "700", color: "var(--text-tertiary)", "margin-bottom": "0.3rem", "letter-spacing": "0.05em" }}>
+                      TOOLS USED ({msg.toolCalls!.length})
+                    </div>
+                    <div style={{ display: "flex", "flex-wrap": "wrap", gap: "0.3rem" }}>
+                      <For each={msg.toolCalls!}>
+                        {(tc) => (
+                          <span style={{
+                            "font-size": "10px",
+                            padding: "0.15rem 0.5rem",
+                            "border-radius": "9999px",
+                            background: "var(--bg-tertiary)",
+                            border: "1px solid var(--border)",
+                            color: "var(--text-secondary)",
+                            "font-family": "var(--font-family-mono)",
+                          }}>
+                            {tc.tool}
+                            <Show when={tc.tool === "ReadFile" || tc.tool === "WriteFile" || tc.tool === "EditFile"}>
+                              <span style={{ color: "var(--text-tertiary)", "margin-left": "0.3rem" }}>
+                                {tc.input?.path?.split(/[/\\]/).pop() || ""}
+                              </span>
+                            </Show>
+                          </span>
+                        )}
+                      </For>
+                    </div>
+                  </div>
                 </Show>
 
                 {/* Timestamp */}
