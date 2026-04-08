@@ -1,7 +1,7 @@
 {
   "name": "@niro-ai/niro",
   "version": "0.1.8",
-  "description": "NiRo.ai - AI-powered DevOps and Testing Automation inspired by Nico Robin. Multi-provider support for CI/CD, infrastructure management, and test orchestration.",
+  "description": "NiRo.ai - AI-powered DevOps and Testing Automation. Multi-provider support for CI/CD, infrastructure management, and test orchestration.",
   "type": "module",
   "bin": {
     "niro": "./bin/niro"

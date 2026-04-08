@@ -2,7 +2,7 @@
 
 ## Core Capabilities
 
-NiRo.ai is specialized for DevOps and testing operations, inspired by Nico Robin's ability to sprout multiple hands for parallel work.
+NiRo.ai is specialized for DevOps and testing operations, orchestrating parallel work across your infrastructure.
 
 ### 1. CI/CD Pipeline Automation 🔧
 
@@ -215,9 +215,9 @@ niro > "Build a comprehensive test suite with:
 - Security tests for auth and input validation"
 ```
 
-## Parallel Operations (Hana Hana no Mi)
+## Parallel Operations
 
-Like Nico Robin sprouting multiple hands, NiRo.ai can execute parallel DevOps tasks:
+NiRo.ai can execute parallel DevOps tasks simultaneously:
 
 1. **Multi-environment deployments**: Deploy to dev, staging, and prod simultaneously
 2. **Distributed testing**: Run test suites across multiple workers

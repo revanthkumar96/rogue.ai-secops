@@ -12,7 +12,7 @@ When users start NiRo.ai, they should see:
 ║    | |\  | || | | |___| (_| | |                                ║
 ║    |_| \_|_||_|  \____|\__,_|_|                                ║
 ║                                                                ║
-║         🌸 Nico Robin AI - DevOps Automation 🌸                ║
+║         🌸 NiRo.ai - DevOps Automation 🌸                      ║
 ║                                                                ║
 ║    "Sprouting solutions across your infrastructure"           ║
 ║                                                                ║
@@ -29,8 +29,8 @@ NiRo.ai is ready to assist with:
   🔍 Monitoring, Alerts & Incident Response
   🔒 Security Scanning & Compliance
 
-Like Nico Robin's Hana Hana no Mi, I can sprout multiple hands
-to execute parallel operations across your infrastructure.
+NiRo.ai can sprout multiple hands to execute parallel
+operations across your infrastructure.
 
 Type /help to see available commands
 Provider: [PROVIDER_NAME] | Model: [MODEL_NAME]
@@ -81,4 +81,4 @@ Instead of generic errors, use thematic messages:
 - **Pipeline Created**: "Pipeline sprouted successfully! 🌸"
 - **Tests Passed**: "All knowledge checks passed! 📚✓"
 - **Deployment Complete**: "Solution bloomed in production! 🚀🌸"
-- **Infrastructure Applied**: "Infrastructure manifested with Hana Hana no Mi! ⚙️"
+- **Infrastructure Applied**: "Infrastructure manifested flawlessly! ⚙️"

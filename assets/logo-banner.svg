@@ -84,7 +84,7 @@
 
   <!-- Subtitle -->
   <text x="320" y="185" font-family="'Arial', sans-serif" font-size="28" font-weight="600"
-        fill="#e0e7ff" letter-spacing="2">NICO ROBIN AI</text>
+        fill="#e0e7ff" letter-spacing="2">NiRo.ai - DevOps Platform</text>
 
   <!-- Description line 1 -->
   <text x="320" y="220" font-family="'Arial', sans-serif" font-size="20"

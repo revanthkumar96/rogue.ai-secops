@@ -7,7 +7,7 @@ This playbook is a practical guide to run NiRo.ai for DevOps and testing operati
 - A DevOps automation CLI that handles CI/CD, testing, infrastructure management, and deployment operations.
 - Multi-provider LLM support with profile management (`profile:init` and `dev:profile`).
 - Runtime health checks (`doctor:runtime`) and diagnostic reporting (`doctor:report`).
-- Parallel task execution inspired by Nico Robin's Hana Hana no Mi abilities.
+- Parallel task execution powered by intelligence orchestration.
 
 ## 2. Daily Start (Fast Path)
 

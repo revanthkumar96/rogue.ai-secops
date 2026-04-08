@@ -2,7 +2,7 @@
 
 Thanks for contributing to NiRo.ai!
 
-NiRo.ai is an AI-powered DevOps and testing automation CLI inspired by Nico Robin from One Piece. We focus on CI/CD pipelines, infrastructure automation, test orchestration, and deployment workflows. The best contributions are focused on DevOps use cases, well-tested, and easy to review.
+NiRo.ai is an AI-powered DevOps and testing automation CLI. We focus on CI/CD pipelines, infrastructure automation, test orchestration, and deployment workflows.
 
 ## Before You Start
 

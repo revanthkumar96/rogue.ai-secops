@@ -1,12 +1,13 @@
-# NiRo.ai 🌸 (Nico Robin)
+# NiRo.ai 🌸
 
-NiRo.ai is an AI-powered DevOps and testing automation CLI inspired by Nico Robin from One Piece - the archaeologist who can create multiple hands to work in parallel.
+NiRo.ai is an AI-powered DevOps and testing automation platform.
+**Rouge-Secops to NiRo.ai**
 
 Built for DevOps engineers and QA teams, NiRo.ai leverages multiple LLM providers to automate testing workflows, CI/CD operations, infrastructure management, and deployment orchestration.
 
-[![PR Checks](https://github.com/Gitlawb/openclaude/actions/workflows/pr-checks.yml/badge.svg?branch=main)](https://github.com/Gitlawb/openclaude/actions/workflows/pr-checks.yml)
-[![Release](https://img.shields.io/github/v/tag/Gitlawb/openclaude?label=release&color=0ea5e9)](https://github.com/Gitlawb/openclaude/tags)
-[![Discussions](https://img.shields.io/badge/discussions-open-7c3aed)](https://github.com/Gitlawb/openclaude/discussions)
+[![PR Checks](https://github.com/revanthkumar96/rogue.ai-secops/actions/workflows/pr-checks.yml/badge.svg?branch=main)](https://github.com/revanthkumar96/rogue.ai-secops/actions/workflows/pr-checks.yml)
+[![Release](https://img.shields.io/github/v/tag/revanthkumar96/rogue.ai-secops?label=release&color=0ea5e9)](https://github.com/revanthkumar96/rogue.ai-secops/tags)
+[![Discussions](https://img.shields.io/badge/discussions-open-7c3aed)](https://github.com/revanthkumar96/rogue.ai-secops/discussions)
 [![Security Policy](https://img.shields.io/badge/security-policy-0f766e)](SECURITY.md)
 [![License](https://img.shields.io/badge/license-MIT-2563eb)](LICENSE)
 
@@ -14,7 +15,7 @@ Built for DevOps engineers and QA teams, NiRo.ai leverages multiple LLM provider
 
 ## Why NiRo.ai
 
-Just like Nico Robin's Hana Hana no Mi (Flower-Flower Fruit) allows her to sprout multiple hands to accomplish tasks simultaneously, NiRo.ai orchestrates multiple AI agents for parallel DevOps operations.
+NiRo.ai orchestrates parallel intelligence across your infrastructure to accomplish complex tasks simultaneously.
 
 - **DevOps-First Design**: Purpose-built for CI/CD pipelines, infrastructure automation, and deployment workflows
 - **Testing Orchestration**: Automated test generation, execution, and analysis across multiple frameworks
@@ -324,7 +325,7 @@ For larger changes, open an issue first so the scope is clear before implementat
 
 ## Disclaimer
 
-NiRo.ai is an independent DevOps automation project. The name and theme are inspired by the One Piece character Nico Robin, created by Eiichiro Oda. NiRo.ai is not affiliated with, endorsed by, or sponsored by Shueisha, Toei Animation, or the creators of One Piece.
+NiRo.ai is an independent DevOps automation project.
 
 This project originated from open-source AI agent frameworks and has been specialized for DevOps and testing operations. See [LICENSE](LICENSE) for details.
 

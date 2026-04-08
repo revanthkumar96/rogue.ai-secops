@@ -311,4 +311,4 @@ Use staging environment first, production on approval."
 
 ---
 
-**Remember:** Like Nico Robin's Hana Hana no Mi, NiRo.ai can sprout multiple hands to work on your infrastructure in parallel! 🌸
+**Remember:** NiRo.ai can sprout multiple hands to work on your infrastructure in parallel! 🌸

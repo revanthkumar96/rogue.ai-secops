@@ -5,5 +5,5 @@
    | |\  | || | | |___| (_| | |
    |_| \_|_||_|  \____|\__,_|_|
 
-     🌸 Nico Robin AI - DevOps Automation 🌸
+     🌸 NiRo.ai - DevOps Automation 🌸
      "Sprouting solutions across your infrastructure"

@@ -1,5 +1,5 @@
-<!-- NiRo.ai Logo Concept - Nico Robin Themed -->
-<!-- Represents Hana Hana no Mi (Flower-Flower Fruit) with DevOps gear -->
+<!-- NiRo.ai Logo Concept -->
+<!-- Represents multi-tasking and parallel intelligence with DevOps gear -->
 <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
   <!-- Background Circle (Navy) -->
   <circle cx="100" cy="100" r="95" fill="#0f172a" stroke="#7c3aed" stroke-width="3"/>
@@ -25,7 +25,7 @@
     <circle r="12" fill="#0f172a"/>
   </g>
 
-  <!-- Flower Petals (Hana Hana no Mi representation) -->
+  <!-- Flower Petals (manifestation representation) -->
   <!-- Top petal -->
   <ellipse cx="100" cy="40" rx="12" ry="20" fill="#a78bfa" opacity="0.9"/>
   <!-- Top-right petal -->

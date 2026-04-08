@@ -1,5 +1,5 @@
-<!-- NiRo.ai - Detailed Nico Robin Inspired Logo -->
-<!-- Features: Hana Hana no Mi flowers, multiple hands motif, DevOps elements -->
+<!-- NiRo.ai - Detailed Logo -->
+<!-- Features: Flowing petals, multiple hands motif, DevOps elements -->
 <svg width="400" height="400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
   <defs>
     <!-- Gradient for depth -->
@@ -98,7 +98,7 @@
     <circle cx="-35" cy="-20" r="3" fill="#f0abfc"/>
   </g>
 
-  <!-- Beautiful Hana Hana no Mi Flower Petals (8 petals) -->
+  <!-- Beautiful Flower Petals (8 petals) -->
   <g filter="url(#glow)">
     <!-- Top petal -->
     <ellipse cx="200" cy="55" rx="22" ry="38" fill="url(#lavenderGrad)" opacity="0.95"/>
@@ -147,7 +147,7 @@
     </g>
   </g>
 
-  <!-- Multiple Hands Motif (Nico Robin's ability) -->
+  <!-- Multiple Hands Motif -->
   <!-- Detailed hand illustrations around the circle -->
   <g stroke="#f0abfc" stroke-width="3" fill="none" opacity="0.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
     <!-- Hand 1: Top -->
@@ -197,7 +197,7 @@
 
   <!-- Subtitle with icon -->
   <text x="200" y="240" font-family="'Arial', sans-serif" font-size="14" font-weight="600"
-        fill="#e0e7ff" text-anchor="middle" letter-spacing="1">🌸 NICO ROBIN 🌸</text>
+        fill="#e0e7ff" text-anchor="middle" letter-spacing="1">🌸 NiRo.ai 🌸</text>
 
   <text x="200" y="260" font-family="'Arial', sans-serif" font-size="12"
         fill="#a78bfa" text-anchor="middle">DevOps Automation</text>
