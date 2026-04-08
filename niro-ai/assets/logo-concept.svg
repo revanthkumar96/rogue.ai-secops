@@ -1,0 +1,65 @@
+<!-- NiRo.ai Logo Concept - Nico Robin Themed -->
+<!-- Represents Hana Hana no Mi (Flower-Flower Fruit) with DevOps gear -->
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Background Circle (Navy) -->
+  <circle cx="100" cy="100" r="95" fill="#0f172a" stroke="#7c3aed" stroke-width="3"/>
+
+  <!-- Central Gear (DevOps) -->
+  <g transform="translate(100, 100)">
+    <!-- Gear body -->
+    <circle r="30" fill="#2563eb"/>
+
+    <!-- Gear teeth (8 teeth) -->
+    <g id="teeth">
+      <rect x="-5" y="-40" width="10" height="15" fill="#2563eb" rx="2"/>
+      <rect x="-5" y="-40" width="10" height="15" fill="#2563eb" rx="2" transform="rotate(45)"/>
+      <rect x="-5" y="-40" width="10" height="15" fill="#2563eb" rx="2" transform="rotate(90)"/>
+      <rect x="-5" y="-40" width="10" height="15" fill="#2563eb" rx="2" transform="rotate(135)"/>
+      <rect x="-5" y="-40" width="10" height="15" fill="#2563eb" rx="2" transform="rotate(180)"/>
+      <rect x="-5" y="-40" width="10" height="15" fill="#2563eb" rx="2" transform="rotate(225)"/>
+      <rect x="-5" y="-40" width="10" height="15" fill="#2563eb" rx="2" transform="rotate(270)"/>
+      <rect x="-5" y="-40" width="10" height="15" fill="#2563eb" rx="2" transform="rotate(315)"/>
+    </g>
+
+    <!-- Center hole -->
+    <circle r="12" fill="#0f172a"/>
+  </g>
+
+  <!-- Flower Petals (Hana Hana no Mi representation) -->
+  <!-- Top petal -->
+  <ellipse cx="100" cy="40" rx="12" ry="20" fill="#a78bfa" opacity="0.9"/>
+  <!-- Top-right petal -->
+  <ellipse cx="135" cy="55" rx="12" ry="20" fill="#a78bfa" opacity="0.9" transform="rotate(45 135 55)"/>
+  <!-- Right petal -->
+  <ellipse cx="160" cy="100" rx="12" ry="20" fill="#a78bfa" opacity="0.9" transform="rotate(90 160 100)"/>
+  <!-- Bottom-right petal -->
+  <ellipse cx="135" cy="145" rx="12" ry="20" fill="#a78bfa" opacity="0.9" transform="rotate(135 135 145)"/>
+  <!-- Bottom petal -->
+  <ellipse cx="100" cy="160" rx="12" ry="20" fill="#a78bfa" opacity="0.9" transform="rotate(180 100 160)"/>
+  <!-- Bottom-left petal -->
+  <ellipse cx="65" cy="145" rx="12" ry="20" fill="#a78bfa" opacity="0.9" transform="rotate(225 65 145)"/>
+  <!-- Left petal -->
+  <ellipse cx="40" cy="100" rx="12" ry="20" fill="#a78bfa" opacity="0.9" transform="rotate(270 40 100)"/>
+  <!-- Top-left petal -->
+  <ellipse cx="65" cy="55" rx="12" ry="20" fill="#a78bfa" opacity="0.9" transform="rotate(315 65 55)"/>
+
+  <!-- Multiple hands symbol (simplified - 3 hand outlines around gear) -->
+  <g opacity="0.7" stroke="#f0abfc" stroke-width="2" fill="none">
+    <!-- Hand 1 (top) -->
+    <path d="M 85,20 L 85,50 M 80,25 L 85,20 L 90,25 M 75,30 L 80,25 M 90,25 L 95,30"/>
+
+    <!-- Hand 2 (bottom-left) -->
+    <path d="M 35,140 L 60,120 M 30,135 L 35,140 L 40,135 M 25,130 L 30,135 M 40,135 L 45,130"/>
+
+    <!-- Hand 3 (bottom-right) -->
+    <path d="M 165,140 L 140,120 M 160,135 L 165,140 L 170,135 M 155,130 L 160,135 M 170,135 L 175,130"/>
+  </g>
+
+  <!-- Text: NiRo.ai -->
+  <text x="100" y="105" font-family="Arial, sans-serif" font-size="24" font-weight="bold"
+        fill="#ffffff" text-anchor="middle">NiRo.ai</text>
+
+  <!-- Subtitle -->
+  <text x="100" y="185" font-family="Arial, sans-serif" font-size="10"
+        fill="#a78bfa" text-anchor="middle">DevOps Automation</text>
+</svg>
