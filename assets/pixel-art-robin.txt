@@ -1,0 +1,40 @@
+Pixel Art - NiRo.ai Logo (16x16)
+==========================================
+
+Simple flower icon for NiRo.ai:
+
+       .-~~-.
+      (  o o )
+       \  ^  /
+    .-~~`---'~~-.
+   (    🌸    )
+    `-._____.-'
+       |   |
+       |   |
+      _|   |_
+
+Color Palette for Digital Assets:
+- Background: #0f172a (Navy)
+- Primary: #7c3aed (Purple)
+- Accent: #a78bfa (Lavender)
+- Highlight: #f0abfc (Pink)
+
+Suggested Icon Designs:
+
+1. Sprouting Hand Icon (Main Logo)
+   - Open palm with flower petals emerging
+   - Purple gradient
+   - 512x512px recommended
+
+2. Multiple Hands Circle (Loading/Processing)
+   - 4-6 hands arranged in a circle
+   - Animated rotation
+   - Represents parallel operations
+
+3. Book with Flower (Knowledge Base Icon)
+   - Open book with flower bookmark
+   - Represents documentation/learning
+
+4. Gear with Petals (DevOps Operations)
+   - Mechanical gear combined with flower petals
+   - Symbolizes automated workflows
