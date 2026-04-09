@@ -3,7 +3,7 @@ import * as protoLoader from '@grpc/proto-loader'
 import path from 'path'
 import * as readline from 'readline'
 
-const PROTO_PATH = path.resolve(import.meta.dirname, '../src/proto/openclaude.proto')
+const PROTO_PATH = path.resolve(import.meta.dirname, '../src/proto/niro.proto')
 
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
   keepCase: true,
@@ -14,7 +14,7 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
 })
 
 const protoDescriptor = grpc.loadPackageDefinition(packageDefinition) as any
-const openclaudeProto = protoDescriptor.openclaude.v1
+const niroProto = protoDescriptor.niro.v1
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -30,7 +30,7 @@ function askQuestion(query: string): Promise<string> {
 async function main() {
   const host = process.env.GRPC_HOST || 'localhost'
   const port = process.env.GRPC_PORT || '50051'
-  const client = new openclaudeProto.AgentService(
+  const client = new niroProto.AgentService(
     `${host}:${port}`,
     grpc.credentials.createInsecure()
   )
@@ -41,7 +41,7 @@ async function main() {
     call = client.Chat()
     let textStreamed = false
 
-    call.on('data', async (serverMessage: any) => {
+    call!.on('data', async (serverMessage: any) => {
       if (serverMessage.text_chunk) {
         process.stdout.write(serverMessage.text_chunk.text)
         textStreamed = true
@@ -80,12 +80,12 @@ async function main() {
       }
     })
 
-    call.on('end', () => {
+    call!.on('end', () => {
       console.log('\n\x1b[90m[Stream closed by server]\x1b[0m')
       // Don't prompt user here, let 'done' or 'error' handlers do it
     })
 
-    call.on('error', (err: Error) => {
+    call!.on('error', (err: Error) => {
       console.error('\n\x1b[31m[Stream Error]\x1b[0m', err.message)
       promptUser()
     })
@@ -113,7 +113,7 @@ async function main() {
     })
   }
 
-  console.log('\x1b[32mOpenClaude gRPC CLI\x1b[0m')
+  console.log('\x1b[32mNiRo.ai gRPC CLI\x1b[0m')
   console.log('\x1b[90mType /exit to quit.\x1b[0m')
   promptUser()
 }
