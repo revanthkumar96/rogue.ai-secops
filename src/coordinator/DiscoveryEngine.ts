@@ -238,7 +238,7 @@ export class DiscoveryEngine {
         fileCount,
         percentage: Math.round((fileCount / total) * 100),
       }))
-      .sort((a, b) => b.fileCount - a.fileCount)
+      .sort((a, b) => b.fileCount - a.fileCount || a.language.localeCompare(b.language))
   }
 
   // --- Dependency parsing ---

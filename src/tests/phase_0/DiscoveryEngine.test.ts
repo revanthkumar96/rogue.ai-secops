@@ -22,6 +22,7 @@ describe('DiscoveryEngine', () => {
 
   it('should detect languages correctly', async () => {
     writeFileSync(join(testRoot, 'main.ts'), 'console.log("hello")')
+    writeFileSync(join(testRoot, 'core.ts'), 'console.log("world")')
     writeFileSync(join(testRoot, 'utils.py'), 'print("hello")')
     writeFileSync(join(testRoot, 'README.md'), '# Test')
 
