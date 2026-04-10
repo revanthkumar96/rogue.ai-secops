@@ -30,12 +30,16 @@ const TIER_ALIASES: Record<string, string> = {
 
 export const call: LocalCommandCall = async (args, _context) => {
   const parts = (args ?? '').trim().split(/\s+/).filter(Boolean)
-  const targetDir = process.cwd()
   let environment = 'staging'
+  let targetDir = process.cwd()
 
   for (const p of parts) {
     const lower = p.toLowerCase()
-    if (lower in TIER_ALIASES) environment = TIER_ALIASES[lower]!
+    if (lower in TIER_ALIASES) {
+      environment = TIER_ALIASES[lower]!
+    } else if (existsSync(resolve(p))) {
+      targetDir = resolve(p)
+    }
   }
 
   const outputDir = join(targetDir, '.niro')
