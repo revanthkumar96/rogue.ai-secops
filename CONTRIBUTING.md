@@ -6,7 +6,7 @@ NiRo.ai is an AI-powered DevOps and testing automation CLI. We focus on CI/CD pi
 
 ## Before You Start
 
-- Search existing [issues](https://github.com/Gitlawb/openclaude/issues) and [discussions](https://github.com/Gitlawb/openclaude/discussions) before opening a new thread.
+- Search existing [issues](https://github.com/revanthkumar96/rogue.ai-secops/issues) and [discussions](https://github.com/revanthkumar96/rogue.ai-secops/discussions) before opening a new thread.
 - Use issues for confirmed bugs and actionable feature work.
 - Use discussions for setup help, ideas, and general community conversation.
 - For larger changes, open an issue first so the scope is clear before implementation.

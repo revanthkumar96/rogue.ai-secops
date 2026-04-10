@@ -309,8 +309,8 @@ If you believe you found a security issue, see [SECURITY.md](SECURITY.md).
 
 ## Community
 
-- Use [GitHub Discussions](https://github.com/Gitlawb/openclaude/discussions) for DevOps workflows, automation ideas, and community conversation
-- Use [GitHub Issues](https://github.com/Gitlawb/openclaude/issues) for bugs, feature requests, and testing improvements
+- Use [GitHub Discussions](https://github.com/revanthkumar96/rogue.ai-secops/discussions) for DevOps workflows, automation ideas, and community conversation
+- Use [GitHub Issues](https://github.com/revanthkumar96/rogue.ai-secops/issues) for bugs, feature requests, and testing improvements
 
 ## Contributing
 
