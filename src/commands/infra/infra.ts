@@ -12,7 +12,7 @@
  */
 
 import { existsSync, readFileSync } from 'fs'
-import { join } from 'path'
+import { join, resolve } from 'path'
 import type { LocalCommandCall } from '../../types/command.js'
 import type { ProjectInventory } from '../../coordinator/DiscoveryEngine.js'
 import { DiscoveryEngine } from '../../coordinator/DiscoveryEngine.js'
@@ -34,11 +34,10 @@ const TIER_ALIASES: Record<string, EnvironmentTier> = {
 
 export const call: LocalCommandCall = async (args, _context) => {
   const parts = (args ?? '').trim().split(/\s+/).filter(Boolean)
-  const targetDir = process.cwd()
-
   // Parse arguments
   let provider: CloudProvider = 'aws'
   let tier: EnvironmentTier = 'development'
+  let targetDir = process.cwd()
 
   for (const part of parts) {
     const lower = part.toLowerCase()
@@ -46,6 +45,8 @@ export const call: LocalCommandCall = async (args, _context) => {
       provider = lower as CloudProvider
     } else if (lower in TIER_ALIASES) {
       tier = TIER_ALIASES[lower]!
+    } else if (existsSync(resolve(part))) {
+      targetDir = resolve(part)
     }
   }
 
